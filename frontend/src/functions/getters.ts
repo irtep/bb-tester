@@ -1,4 +1,3 @@
-import { PITCH_HEIGHT, PITCH_WIDTH } from "../components/Blood_Bowl";
 import type { GameState, Player } from "../types/types";
 
 export function getAdjacentOpponents(player: Player, gameState: GameState): Player[] {
