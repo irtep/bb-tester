@@ -1,9 +1,23 @@
 import { Trophy } from 'lucide-react';
 import React from 'react';
 import { useGame } from '../context/GameContext';
+import { callDice } from '../functions/gameFunctions';
 
 const GameHeader: React.FC = (): React.ReactElement => {
     const { gameState, setGameState, addLog } = useGame();
+
+    const tossCoin = () => {
+        const toss = callDice(2);
+        let current = '';
+
+        if (toss === 1) {current = 'home'} else {current = 'away'};
+
+        setGameState(prev => ({
+            ...prev,
+            currentTeam: current,
+            gamePhase: 'deploy defence'
+        }));
+    }
 
     function endTurn() {
         const nextTeam = gameState.currentTeam === 'home' ? 'away' : 'home';
@@ -36,19 +50,19 @@ const GameHeader: React.FC = (): React.ReactElement => {
     }
 
     return (
-        < div className="bg-white rounded-lg shadow-lg p-4 mb-4" >
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-4">
+        < div>
+            <div>
+                <div>
                     <Trophy className="text-yellow-500" />
                     <div>
-                        <h1 className="text-2xl font-bold">Blood Bowl</h1>
-                        <p className="text-sm text-gray-600">
+                        <h1>Blood Bowl</h1>
+                        <p>
                             Half {gameState.half} - Turn {gameState.turn}/8
                         </p>
                     </div>
                 </div>
 
-                <div className="flex gap-8 text-center">
+                <div>
                     <div className={`p-2 rounded ${gameState.currentTeam === 'home' ? 'bg-blue-100' : ''}`}>
                         <div className="text-2xl font-bold text-blue-600">{gameState.score.home}</div>
                         <div className="text-xs">Home</div>
@@ -58,6 +72,18 @@ const GameHeader: React.FC = (): React.ReactElement => {
                         <div className="text-xs">Away</div>
                     </div>
                 </div>
+
+                {
+                    (gameState.gamePhase === 'coin toss')?
+                    <>
+                        <button
+                            onClick={tossCoin}
+                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold"
+                        >
+                            Toss a coin to determine who kicks off
+                        </button>
+                    </>:<></>
+                }
 
                 <button
                     onClick={endTurn}

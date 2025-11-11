@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { CELL_SIZE, END_ZONE_WIDTH, PITCH_HEIGHT, PITCH_WIDTH } from './Blood_Bowl';
-import { rollD6 } from '../functions/gameFunctions';
+import { callDice } from '../functions/gameFunctions';
 import type { Player, PlayerStatus } from '../types/types';
 import { Dices } from 'lucide-react';
 
@@ -115,7 +115,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
         }
 
         // Simplified block: compare strength
-        const roll = rollD6();
+        const roll = callDice(6);
         showDiceRoll(`Block: ${roll}`);
 
         const success = roll + attacker.st > defender.st + 3;
@@ -204,7 +204,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
             return;
         }
 
-        const roll = rollD6();
+        const roll = callDice(6);
         showDiceRoll(`Foul: ${roll}`);
 
         if (roll >= 5) {
@@ -265,142 +265,221 @@ const GameBoard: React.FC = (): React.ReactElement => {
         }
     }
     return (
-        <div className="bg-green-800 rounded-lg shadow-lg p-4 relative">
-            <svg width={PITCH_WIDTH * CELL_SIZE} height={PITCH_HEIGHT * CELL_SIZE}>
-                {/* Draw grid */}
-                {Array.from({ length: PITCH_WIDTH }).map((_, x) =>
-                    Array.from({ length: PITCH_HEIGHT }).map((_, y) => (
-                        <rect
-                            key={`${x}-${y}`}
-                            x={x * CELL_SIZE}
-                            y={y * CELL_SIZE}
-                            width={CELL_SIZE}
-                            height={CELL_SIZE}
-                            fill={
-                                (x < END_ZONE_WIDTH || x >= PITCH_WIDTH - END_ZONE_WIDTH) ? '#86efac' : // End zones (lighter green)
-                                    gameState.validMoves.some(m => m.x === x && m.y === y) ? '#fbbf24' : // Valid moves
-                                        '#22c55e' // Field color (lighter green)
-                            }
-                            stroke="#15803d"
-                            strokeWidth="1.5"
-                            onClick={() => handleCellClick(x, y)}
-                            className="cursor-pointer hover:fill-green-600"
-                        />
-                    ))
-                )}
+        <div>
+            {/* TEAMS ROW */}
 
-                {/* Draw end zone labels */}
-                <text
-                    x={END_ZONE_WIDTH * CELL_SIZE / 2}
-                    y={PITCH_HEIGHT * CELL_SIZE / 2}
-                    textAnchor="middle"
-                    fill="white"
-                    fontSize="12"
-                    transform={`rotate(-90 ${END_ZONE_WIDTH * CELL_SIZE / 2} ${PITCH_HEIGHT * CELL_SIZE / 2})`}
-                >
-                    AWAY END ZONE
-                </text>
-                <text
-                    x={(PITCH_WIDTH - END_ZONE_WIDTH / 2) * CELL_SIZE}
-                    y={PITCH_HEIGHT * CELL_SIZE / 2}
-                    textAnchor="middle"
-                    fill="white"
-                    fontSize="12"
-                    transform={`rotate(90 ${(PITCH_WIDTH - END_ZONE_WIDTH / 2) * CELL_SIZE} ${PITCH_HEIGHT * CELL_SIZE / 2})`}
-                >
-                    HOME END ZONE
-                </text>
+            <div className="flex w-screen">
 
-                {/* Draw ball */}
-                {gameState.ball && !gameState.ballCarrier && (
-                    <circle
-                        cx={gameState.ball.x * CELL_SIZE + CELL_SIZE / 2}
-                        cy={gameState.ball.y * CELL_SIZE + CELL_SIZE / 2}
-                        r={8}
-                        fill="#fbbf24"
-                        stroke="#92400e"
-                        strokeWidth="2"
-                    />
-                )}
-
-                {/* Draw players */}
-                {gameState.players.map((player: Player) => {
-                    // 'standing' | 'down' | 'stunned'
-                    if (player.status === 'standing' ||
-                        player.status === 'down' ||
-                        player.status === 'stunned'
-                    ) {
-                        return (
-                            <g
-                                key={player.id}
-                                onClick={() => handleCellClick(player.position.x, player.position.y)}
+                <div className="w-1/2 bg-blue-500">
+                    <h2 className="font-bold text-lg text-blue-700 mb-2">
+                        {gameState.team1.name}
+                    </h2>
+                    <div className="grid grid-cols-5 gap-2">
+                        {gameState.team1.players.map((p) => (
+                            <div
+                                key={p.id}
+                                className={`p-2 rounded text-white text-sm text-center w-20 ${p.status === 'down'
+                                    ? 'bg-gray-600'
+                                    : p.status === 'stunned'
+                                        ? 'bg-yellow-600'
+                                        : 'bg-blue-700'
+                                    }`}
                             >
+                                <div className="font-semibold truncate">{p.name ?? p.id}</div>
+                                <div className="text-xs">#{p.number}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="w-1/2 bg-red-500">
+                    <h2 className="font-bold text-lg text-red-700 mb-2">
+                        {gameState.team2.name}
+                    </h2>
+                    <div className="grid grid-cols-5 gap-2">
+                        {gameState.team2.players.map((p) => (
+                            <div
+                                key={p.id}
+                                className={`p-2 rounded text-white text-sm text-center w-20 ${p.status === 'down'
+                                    ? 'bg-gray-600'
+                                    : p.status === 'stunned'
+                                        ? 'bg-yellow-600'
+                                        : 'bg-red-700'
+                                    }`}
+                            >
+                                <div className="font-semibold truncate">{p.name ?? p.id}</div>
+                                <div className="text-xs">#{p.number}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+            </div>
+
+            {/* BOARD */}
+            <div className="bg-green-800 rounded-lg shadow-lg p-4">
+                <svg width={PITCH_WIDTH * CELL_SIZE} height={PITCH_HEIGHT * CELL_SIZE}>
+                    {/* Draw grid */}
+                    {Array.from({ length: PITCH_WIDTH }).map((_, x) =>
+                        Array.from({ length: PITCH_HEIGHT }).map((_, y) => (
+                            <rect
+                                key={`${x}-${y}`}
+                                x={x * CELL_SIZE}
+                                y={y * CELL_SIZE}
+                                width={CELL_SIZE}
+                                height={CELL_SIZE}
+                                fill={
+                                    x < END_ZONE_WIDTH || x >= PITCH_WIDTH - END_ZONE_WIDTH
+                                        ? "#86efac"
+                                        : gameState.validMoves.some((m) => m.x === x && m.y === y)
+                                            ? "#fbbf24"
+                                            : "#22c55e"
+                                }
+                                stroke="#15803d"
+                                strokeWidth="1.5"
+                                onClick={() => handleCellClick(x, y)}
+                                className="cursor-pointer hover:fill-green-600"
+                            />
+                        ))
+                    )}
+
+                    {/* End zone labels */}
+                    <text
+                        x={(END_ZONE_WIDTH * CELL_SIZE) / 2}
+                        y={(PITCH_HEIGHT * CELL_SIZE) / 2}
+                        textAnchor="middle"
+                        fill="white"
+                        fontSize="12"
+                        transform={`rotate(-90 ${(END_ZONE_WIDTH * CELL_SIZE) / 2
+                            } ${(PITCH_HEIGHT * CELL_SIZE) / 2})`}
+                    >
+                        AWAY END ZONE
+                    </text>
+                    <text
+                        x={(PITCH_WIDTH - END_ZONE_WIDTH / 2) * CELL_SIZE}
+                        y={(PITCH_HEIGHT * CELL_SIZE) / 2}
+                        textAnchor="middle"
+                        fill="white"
+                        fontSize="12"
+                        transform={`rotate(90 ${(PITCH_WIDTH - END_ZONE_WIDTH / 2) * CELL_SIZE
+                            } ${(PITCH_HEIGHT * CELL_SIZE) / 2})`}
+                    >
+                        HOME END ZONE
+                    </text>
+
+                    {/* Scrimmage & wide zone lines */}
+                    <line
+                        x1={(PITCH_WIDTH * CELL_SIZE) / 2}
+                        y1={0}
+                        x2={(PITCH_WIDTH * CELL_SIZE) / 2}
+                        y2={PITCH_HEIGHT * CELL_SIZE}
+                        stroke="#15803d"
+                        strokeWidth="3"
+                        strokeDasharray="8,4"
+                    />
+                    <line
+                        x1={0}
+                        y1={4 * CELL_SIZE}
+                        x2={PITCH_WIDTH * CELL_SIZE}
+                        y2={4 * CELL_SIZE}
+                        stroke="#15803d"
+                        strokeWidth="3"
+                    />
+                    <line
+                        x1={0}
+                        y1={(PITCH_HEIGHT - 4) * CELL_SIZE}
+                        x2={PITCH_WIDTH * CELL_SIZE}
+                        y2={(PITCH_HEIGHT - 4) * CELL_SIZE}
+                        stroke="#15803d"
+                        strokeWidth="3"
+                    />
+
+                    {/* Ball */}
+                    {gameState.ball && !gameState.ballCarrier && (
+                        <circle
+                            cx={gameState.ball.x * CELL_SIZE + CELL_SIZE / 2}
+                            cy={gameState.ball.y * CELL_SIZE + CELL_SIZE / 2}
+                            r={8}
+                            fill="#fbbf24"
+                            stroke="#92400e"
+                            strokeWidth="2"
+                        />
+                    )}
+
+                    {/* Players */}
+                    {gameState.players.map((player: Player) => (
+                        <g
+                            key={player.id}
+                            onClick={() =>
+                                handleCellClick(player.position.x, player.position.y)
+                            }
+                        >
+                            <circle
+                                cx={player.position.x * CELL_SIZE + CELL_SIZE / 2}
+                                cy={player.position.y * CELL_SIZE + CELL_SIZE / 2}
+                                r={7}
+                                fill={
+                                    player.status === "down"
+                                        ? "#6b7280"
+                                        : player.team === "home"
+                                            ? "#3b82f6"
+                                            : "#ef4444"
+                                }
+                                stroke={
+                                    player.id === gameState.selectedPlayer ? "#fbbf24" : "#000"
+                                }
+                                strokeWidth={player.id === gameState.selectedPlayer ? 3 : 1}
+                                className="cursor-pointer"
+                                opacity={player.status === "down" ? 0.5 : 1}
+                            />
+
+                            {/* Ball indicator */}
+                            {gameState.ballCarrier === player.id && (
                                 <circle
                                     cx={player.position.x * CELL_SIZE + CELL_SIZE / 2}
                                     cy={player.position.y * CELL_SIZE + CELL_SIZE / 2}
-                                    r={7}
-                                    fill={
-                                        player.status === 'down'
-                                            ? '#6b7280'
-                                            : player.team === 'home'
-                                                ? '#3b82f6'
-                                                : '#ef4444'
-                                    }
-                                    stroke={player.id === gameState.selectedPlayer ? '#fbbf24' : '#000'}
-                                    strokeWidth={player.id === gameState.selectedPlayer ? 3 : 1}
-                                    className="cursor-pointer"
-                                    opacity={player.status === 'down' ? 0.5 : 1}
+                                    r={6}
+                                    fill="#fbbf24"
                                 />
+                            )}
 
-                                {/* Ball indicator */}
-                                {gameState.ballCarrier === player.id && (
-                                    <circle
-                                        cx={player.position.x * CELL_SIZE + CELL_SIZE / 2}
-                                        cy={player.position.y * CELL_SIZE + CELL_SIZE / 2}
-                                        r={6}
-                                        fill="#fbbf24"
-                                    />
-                                )}
+                            {/* Player ID */}
+                            <text
+                                x={player.position.x * CELL_SIZE + CELL_SIZE / 2}
+                                y={player.position.y * CELL_SIZE + CELL_SIZE / 2 + 4}
+                                textAnchor="middle"
+                                fill="white"
+                                fontSize="8"
+                                fontWeight="bold"
+                                pointerEvents="none"
+                            >
+                                {player.id}
+                            </text>
 
-                                {/* Player ID text */}
-                                <text
-                                    x={player.position.x * CELL_SIZE + CELL_SIZE / 2}
-                                    y={player.position.y * CELL_SIZE + CELL_SIZE / 2 + 4}
-                                    textAnchor="middle"
-                                    fill="white"
-                                    fontSize="8"
-                                    fontWeight="bold"
-                                    pointerEvents="none"
-                                >
-                                    {player.id}
-                                </text>
+                            {/* Player status */}
+                            <text
+                                x={player.position.x * CELL_SIZE + CELL_SIZE / 2}
+                                y={player.position.y * CELL_SIZE + CELL_SIZE / 2 + 13}
+                                textAnchor="middle"
+                                fill="white"
+                                fontSize="6"
+                                pointerEvents="none"
+                            >
+                                {player.status}
+                            </text>
+                        </g>
+                    ))}
+                </svg>
 
-                                {/* Player status text (below ID) */}
-                                <text
-                                    x={player.position.x * CELL_SIZE + CELL_SIZE / 2}
-                                    y={player.position.y * CELL_SIZE + CELL_SIZE / 2 + 13}
-                                    textAnchor="middle"
-                                    fill="white"
-                                    fontSize="6"
-                                    pointerEvents="none"
-                                >
-                                    {player.status}
-                                </text>
-                            </g>
-                        );
-                    }
-                })}
-
-            </svg>
-
-            {diceRoll && (
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-8 text-4xl font-bold">
-                    <Dices className="inline mr-2" />
-                    {diceRoll}
-                </div>
-            )}
+                {/* Dice roll overlay */}
+                {diceRoll && (
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-8 text-4xl font-bold">
+                        <Dices className="inline mr-2" />
+                        {diceRoll}
+                    </div>
+                )}
+            </div>
         </div>
     );
-}
-
+};
 export default GameBoard;

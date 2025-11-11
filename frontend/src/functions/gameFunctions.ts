@@ -40,6 +40,7 @@ export function initializeGame(): GameState { /*
         });
     }
 */
+ 
     return {
         players: [...sampleTeams[0].players, ...sampleTeams[1].players],
         ball: { x: 13, y: 7 }, // Center of pitch
@@ -52,7 +53,7 @@ export function initializeGame(): GameState { /*
         selectedPlayer: null,
         validMoves: [],
         actionPhase: null,
-        log: ['Game started! Home team kicks off.'],
+        log: [`Ok, lets start the match`],
         blitzUsed: false,
         passUsed: false,
         foulUsed: false,
@@ -61,6 +62,6 @@ export function initializeGame(): GameState { /*
     };
 }
 
-export function rollD6(): number {
-    return Math.floor(Math.random() * 6) + 1;
+export function callDice(dWhat: number): number {
+    return Math.floor(Math.random() * dWhat) + 1;
 }
