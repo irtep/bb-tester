@@ -1,24 +1,49 @@
-export type Team = 'home' | 'away';
-export type PlayerStatus = 'standing' | 'down' | 'stunned' | 'ko' | 'injured';
+export type PlayerStatus = 'standing' | 'down' | 'stunned' | 'ko' | 'injured' | 'bench' | 'standby';
+
+// 7 mini, 10 small, 15 medium, 25 big, 
+export type baseSize = 7 | 10 | 15 | 25;
+
+export interface BloodBowlTeam {
+  id: string;
+  name: string;
+  type: string; // for example human
+  rerolls: number;
+  players: Player[];
+  totalValue: number;
+  record: {wins: number, draws: number, touchdowns: number, casualties: number};
+  goalsInthisMatch: number;
+  casualtiesInThisMatch: number;
+};
 
 export interface Player {
   id: string;
-  team: Team;
+  name: string;
+  type: string; // for example human lineman
+  team: string;
   position: { x: number; y: number };
   ma: number; // Movement Allowance
   st: number; // Strength
   ag: number; // Agility (target number, lower is better)
+  pa: number; // passing
   av: number; // Armor Value
   status: PlayerStatus;
   hasMoved: boolean;
   hasActed: boolean;
+  movementLeft: number;
+  blitzesLeft: number;
+  skills: string[];
+  baseSize: baseSize;
+  value: number;
+  injuries: string[];
+  holdingBall: boolean;
 }
 
 export interface GameState {
   players: Player[];
   ball: { x: number; y: number } | null;
   ballCarrier: string | null;
-  currentTeam: Team;
+  currentTeam: string;
+  gamePhase: 'coin toss' | 'decide kicker' | 'deploy defence' | 'deploy offense' | 'game';
   turn: number;
   half: number;
   score: { home: number; away: number };
@@ -29,4 +54,6 @@ export interface GameState {
   blitzUsed: boolean;
   passUsed: boolean;
   foulUsed: boolean;
+  team1: BloodBowlTeam;
+  team2: BloodBowlTeam;
 }

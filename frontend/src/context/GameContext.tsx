@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { initializeGame } from "../functions/gamePlay";
+import { initializeGame } from "../functions/gameFunctions";
 import type { GameState } from "../types/types";
 
 type GameContextType = {

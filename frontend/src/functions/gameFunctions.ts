@@ -1,10 +1,13 @@
+import { sampleTeams } from "../teams/teams";
 import type { GameState, Player } from "../types/types";
 
-export function initializeGame(): GameState {
+export function initializeGame(): GameState { /*
     const homePlayers: Player[] = [];
     const awayPlayers: Player[] = [];
-
+*/
     // Create 11 players per team with varied positions
+
+/*
     for (let i = 0; i < 11; i++) {
         const yPos = 2 + i;
 
@@ -36,12 +39,13 @@ export function initializeGame(): GameState {
             hasActed: false
         });
     }
-
+*/
     return {
-        players: [...homePlayers, ...awayPlayers],
+        players: [...sampleTeams[0].players, ...sampleTeams[1].players],
         ball: { x: 13, y: 7 }, // Center of pitch
         ballCarrier: null,
         currentTeam: 'home',
+        gamePhase: 'coin toss',
         turn: 1,
         half: 1,
         score: { home: 0, away: 0 },
@@ -51,7 +55,9 @@ export function initializeGame(): GameState {
         log: ['Game started! Home team kicks off.'],
         blitzUsed: false,
         passUsed: false,
-        foulUsed: false
+        foulUsed: false,
+        team1: sampleTeams[0],
+        team2: sampleTeams[1]
     };
 }
 
