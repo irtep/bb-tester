@@ -20,23 +20,15 @@ const Blood_Bowl: React.FC = () => {
   });
 
   return (
-    <div className="w-full h-screen bg-gradient-to-br from-green-900 to-green-700 p-4 overflow-auto">
-      <div className="max-w-7xl mx-auto">
-
+    <div>
+      <div>
         <GameHeader />
-
-        <div className="flex gap-4">
-
-          <div className="bg-white rounded-lg shadow-lg p-4 w-80">
-
+        <div>
+          <div>
             <GameLog />
-
-            <div className="mt-4 p-3 bg-gray-50 rounded">
-
+            <div>
               <ActionMenu />
-
               <GameBoard />
-
               {gameState.actionPhase && gameState.actionPhase !== 'select_action' && (
                 <p className="text-xs mt-2 text-gray-600">
                   {gameState.actionPhase === 'movement' && 'Click yellow squares to move'}
@@ -51,9 +43,7 @@ const Blood_Bowl: React.FC = () => {
           </div>
         </div>
       </div >
-
       <Instructions />
-      
     </div >
   );
 };

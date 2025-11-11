@@ -2,6 +2,7 @@ import type { Player } from "../types/types";
 
 export const defaultPlayer : Player = {
     id: 'default0',
+    number: 0,
     name: 'default Guy',
     type: 'human linesman',
     team: 'default team',

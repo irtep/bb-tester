@@ -17,6 +17,7 @@ export interface BloodBowlTeam {
 
 export interface Player {
   id: string;
+  number: number,
   name: string;
   type: string; // for example human lineman
   team: string;
