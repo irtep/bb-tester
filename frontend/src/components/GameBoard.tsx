@@ -268,56 +268,104 @@ const GameBoard: React.FC = (): React.ReactElement => {
         <div>
             {/* TEAMS ROW */}
 
-            <div className="flex w-screen">
-
-                <div className="w-1/2 bg-blue-500">
-                    <h2 className="font-bold text-lg text-blue-700 mb-2">
+            <div style={{ display: 'flex', width: '100vw' }}>
+                <div>
+                    <h2 style={{
+                        fontWeight: 'bold',
+                        fontSize: '1.125rem',
+                        color: '#1d4ed8',
+                        marginBottom: '0.5rem'
+                    }}>
                         {gameState.team1.name}
                     </h2>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+                        gap: '0.5rem'
+                    }}>
                         {gameState.team1.players.map((p) => (
                             <div
                                 key={p.id}
-                                className={`p-2 rounded text-white text-sm text-center w-20 ${p.status === 'down'
-                                    ? 'bg-gray-600'
-                                    : p.status === 'stunned'
-                                        ? 'bg-yellow-600'
-                                        : 'bg-blue-700'
-                                    }`}
+                                style={{
+                                    padding: '0.5rem',
+                                    borderRadius: '0.25rem',
+                                    color: 'white',
+                                    fontSize: '0.875rem',
+                                    textAlign: 'center',
+                                    width: '5rem',
+                                    backgroundColor: p.status === 'down'
+                                        ? '#4b5563'
+                                        : p.status === 'stunned'
+                                            ? '#ca8a04'
+                                            : '#1d4ed8'
+                                }}
                             >
-                                <div className="font-semibold truncate">{p.name ?? p.id}</div>
-                                <div className="text-xs">#{p.number}</div>
+                                <div>{`#${p.number} ${p.name}`}</div>
+                                <div style={{ fontSize: '0.75rem' }}>{`MA ${p.ma}, ST ${p.st}, AG ${p.ag}, PA ${p.pa}, AV ${p.av}`}</div>
+                                <div style={{ fontSize: '0.75rem' }}>{
+                                    p.skills.map( s => {
+                                        return(
+                                            <div>{s}</div>
+                                        )
+                                    })
+                                    }
+                                </div>
+                                <div>{p.status}</div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="w-1/2 bg-red-500">
-                    <h2 className="font-bold text-lg text-red-700 mb-2">
+                <div style={{
+                    width: '50%',
+                    backgroundColor: '#ef4444',
+                    padding: '8px'
+                }}>
+                    <h2 style={{
+                        fontWeight: 'bold',
+                        fontSize: '1.125rem',
+                        color: '#dc2626',
+                        marginBottom: '0.5rem'
+                    }}>
                         {gameState.team2.name}
                     </h2>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+                        gap: '0.5rem'
+                    }}>
                         {gameState.team2.players.map((p) => (
                             <div
                                 key={p.id}
-                                className={`p-2 rounded text-white text-sm text-center w-20 ${p.status === 'down'
-                                    ? 'bg-gray-600'
-                                    : p.status === 'stunned'
-                                        ? 'bg-yellow-600'
-                                        : 'bg-red-700'
-                                    }`}
+                                style={{
+                                    padding: '0.5rem',
+                                    borderRadius: '0.25rem',
+                                    color: 'white',
+                                    fontSize: '0.875rem',
+                                    textAlign: 'center',
+                                    width: '5rem',
+                                    backgroundColor: p.status === 'down'
+                                        ? '#4b5563'
+                                        : p.status === 'stunned'
+                                            ? '#ca8a04'
+                                            : '#dc2626'
+                                }}
                             >
-                                <div className="font-semibold truncate">{p.name ?? p.id}</div>
-                                <div className="text-xs">#{p.number}</div>
+                                <div style={{
+                                    fontWeight: '600',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                }}>{p.name ?? p.id}</div>
+                                <div style={{ fontSize: '0.75rem' }}>#{p.number}</div>
                             </div>
                         ))}
                     </div>
                 </div>
-
             </div>
 
             {/* BOARD */}
-            <div className="bg-green-800 rounded-lg shadow-lg p-4">
+            <div style={{ margin: 5 }}>
                 <svg width={PITCH_WIDTH * CELL_SIZE} height={PITCH_HEIGHT * CELL_SIZE}>
                     {/* Draw grid */}
                     {Array.from({ length: PITCH_WIDTH }).map((_, x) =>
@@ -470,14 +518,6 @@ const GameBoard: React.FC = (): React.ReactElement => {
                         </g>
                     ))}
                 </svg>
-
-                {/* Dice roll overlay */}
-                {diceRoll && (
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-8 text-4xl font-bold">
-                        <Dices className="inline mr-2" />
-                        {diceRoll}
-                    </div>
-                )}
             </div>
         </div>
     );

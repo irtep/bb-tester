@@ -10,7 +10,9 @@ const GameHeader: React.FC = (): React.ReactElement => {
         const toss = callDice(2);
         let current = '';
 
-        if (toss === 1) {current = 'home'} else {current = 'away'};
+        if (toss === 1) { current = 'home' } else { current = 'away' };
+
+        addLog(`${current} receives! and deploys now a defence formation.`);
 
         setGameState(prev => ({
             ...prev,
@@ -63,26 +65,19 @@ const GameHeader: React.FC = (): React.ReactElement => {
                 </div>
 
                 <div>
-                    <div className={`p-2 rounded ${gameState.currentTeam === 'home' ? 'bg-blue-100' : ''}`}>
-                        <div className="text-2xl font-bold text-blue-600">{gameState.score.home}</div>
-                        <div className="text-xs">Home</div>
-                    </div>
-                    <div className={`p-2 rounded ${gameState.currentTeam === 'away' ? 'bg-red-100' : ''}`}>
-                        <div className="text-2xl font-bold text-red-600">{gameState.score.away}</div>
-                        <div className="text-xs">Away</div>
-                    </div>
+                    <div>{`${gameState.score.home} Home / ${gameState.score.away} Away`}</div>
                 </div>
 
                 {
-                    (gameState.gamePhase === 'coin toss')?
-                    <>
-                        <button
-                            onClick={tossCoin}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold"
-                        >
-                            Toss a coin to determine who kicks off
-                        </button>
-                    </>:<></>
+                    (gameState.gamePhase === 'coin toss') ?
+                        <>
+                            <button
+                                onClick={tossCoin}
+                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold"
+                            >
+                                Toss a coin to determine who kicks off
+                            </button>
+                        </> : <></>
                 }
 
                 <button
