@@ -20,7 +20,16 @@ export const sampleTeams: BloodBowlTeam[] = [
         type: 'human',
         rerolls: 2,
         players: [
-            defaultPlayer, { ...defaultPlayer, id: "2", name: 'strongie', st: 4 }, { ...defaultPlayer, id: "3", name: 'quckie', ma: 7, ag: 3 }, { ...defaultPlayer, id: "4" }, { ...defaultPlayer, id: "5" }
+            defaultPlayer,
+            { ...defaultPlayer, id: "2", name: 'strongie', st: 4, skills: ['block', 'pro'] },
+            { ...defaultPlayer, id: "3", name: 'quckie', ma: 7, ag: 3 },
+            { ...defaultPlayer, id: "4" },
+            { ...defaultPlayer, id: "5" },
+            { ...defaultPlayer, id: "5x" },
+            { ...defaultPlayer, id: "5y" },
+            { ...defaultPlayer, id: "5z" },
+            { ...defaultPlayer, id: "5b" },
+
         ],
         totalValue: 100000,
         record: {
