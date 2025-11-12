@@ -3,19 +3,14 @@ import { useGame } from '../context/GameContext';
 import { CELL_SIZE, END_ZONE_WIDTH, PITCH_HEIGHT, PITCH_WIDTH } from './Blood_Bowl';
 import { callDice } from '../functions/gameFunctions';
 import type { Player, PlayerStatus } from '../types/types';
-import { Dices } from 'lucide-react';
+import GameLog from './GameLog';
+import Bench from './Bench';
 
 const GameBoard: React.FC = (): React.ReactElement => {
-    const [diceRoll, setDiceRoll] = useState<string | null>(null);
     const { gameState,
         addLog,
         setGameState
     } = useGame();
-
-    function showDiceRoll(result: string) {
-        setDiceRoll(result);
-        setTimeout(() => setDiceRoll(null), 2000);
-    }
 
     function selectPlayer(playerId: string) {
         const player = gameState.players.find(p => p.id === playerId);
@@ -116,7 +111,6 @@ const GameBoard: React.FC = (): React.ReactElement => {
 
         // Simplified block: compare strength
         const roll = callDice(6);
-        showDiceRoll(`Block: ${roll}`);
 
         const success = roll + attacker.st > defender.st + 3;
 
@@ -205,7 +199,6 @@ const GameBoard: React.FC = (): React.ReactElement => {
         }
 
         const roll = callDice(6);
-        showDiceRoll(`Foul: ${roll}`);
 
         if (roll >= 5) {
             const updatedPlayers = gameState.players.map(p =>
@@ -269,51 +262,8 @@ const GameBoard: React.FC = (): React.ReactElement => {
             {/* TEAMS ROW */}
 
             <div style={{ display: 'flex', width: '100vw' }}>
-                <div>
-                    <h2 style={{
-                        fontWeight: 'bold',
-                        fontSize: '1.125rem',
-                        color: '#1d4ed8',
-                        marginBottom: '0.5rem'
-                    }}>
-                        {gameState.team1.name}
-                    </h2>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-                        gap: '0.5rem'
-                    }}>
-                        {gameState.team1.players.map((p) => (
-                            <div
-                                key={p.id}
-                                style={{
-                                    padding: '0.5rem',
-                                    borderRadius: '0.25rem',
-                                    color: 'white',
-                                    fontSize: '0.875rem',
-                                    textAlign: 'center',
-                                    width: '5rem',
-                                    backgroundColor: p.status === 'down'
-                                        ? '#4b5563'
-                                        : p.status === 'stunned'
-                                            ? '#ca8a04'
-                                            : '#1d4ed8'
-                                }}
-                            >
-                                <div>{`#${p.number} ${p.name}`}</div>
-                                <div style={{ fontSize: '0.75rem' }}>{`MA ${p.ma}, ST ${p.st}, AG ${p.ag}, PA ${p.pa}, AV ${p.av}`}</div>
-                                <div style={{ fontSize: '0.75rem' }}>{
-                                    p.skills.map( s => {
-                                        return(
-                                            <div>{s}</div>
-                                        )
-                                    })
-                                    }
-                                </div>
-                                <div>{p.status}</div>
-                            </div>
-                        ))}
-                    </div>
+                <div style={{ width: "50%" }}>
+                    <Bench team={gameState.team1}/>
                 </div>
 
                 <div style={{
@@ -365,159 +315,164 @@ const GameBoard: React.FC = (): React.ReactElement => {
             </div>
 
             {/* BOARD */}
-            <div style={{ margin: 5 }}>
-                <svg width={PITCH_WIDTH * CELL_SIZE} height={PITCH_HEIGHT * CELL_SIZE}>
-                    {/* Draw grid */}
-                    {Array.from({ length: PITCH_WIDTH }).map((_, x) =>
-                        Array.from({ length: PITCH_HEIGHT }).map((_, y) => (
-                            <rect
-                                key={`${x}-${y}`}
-                                x={x * CELL_SIZE}
-                                y={y * CELL_SIZE}
-                                width={CELL_SIZE}
-                                height={CELL_SIZE}
-                                fill={
-                                    x < END_ZONE_WIDTH || x >= PITCH_WIDTH - END_ZONE_WIDTH
-                                        ? "#86efac"
-                                        : gameState.validMoves.some((m) => m.x === x && m.y === y)
-                                            ? "#fbbf24"
-                                            : "#22c55e"
-                                }
-                                stroke="#15803d"
-                                strokeWidth="1.5"
-                                onClick={() => handleCellClick(x, y)}
-                                className="cursor-pointer hover:fill-green-600"
-                            />
-                        ))
-                    )}
+            <div style={{ display: 'flex', width: '100vw' }}>
+                <div style={{ width: "85%" }}>
+                    <svg width={PITCH_WIDTH * CELL_SIZE} height={PITCH_HEIGHT * CELL_SIZE}>
+                        {/* Draw grid */}
+                        {Array.from({ length: PITCH_WIDTH }).map((_, x) =>
+                            Array.from({ length: PITCH_HEIGHT }).map((_, y) => (
+                                <rect
+                                    key={`${x}-${y}`}
+                                    x={x * CELL_SIZE}
+                                    y={y * CELL_SIZE}
+                                    width={CELL_SIZE}
+                                    height={CELL_SIZE}
+                                    fill={
+                                        x < END_ZONE_WIDTH || x >= PITCH_WIDTH - END_ZONE_WIDTH
+                                            ? "#86efac"
+                                            : gameState.validMoves.some((m) => m.x === x && m.y === y)
+                                                ? "#fbbf24"
+                                                : "#22c55e"
+                                    }
+                                    stroke="#15803d"
+                                    strokeWidth="1.5"
+                                    onClick={() => handleCellClick(x, y)}
+                                    className="cursor-pointer hover:fill-green-600"
+                                />
+                            ))
+                        )}
 
-                    {/* End zone labels */}
-                    <text
-                        x={(END_ZONE_WIDTH * CELL_SIZE) / 2}
-                        y={(PITCH_HEIGHT * CELL_SIZE) / 2}
-                        textAnchor="middle"
-                        fill="white"
-                        fontSize="12"
-                        transform={`rotate(-90 ${(END_ZONE_WIDTH * CELL_SIZE) / 2
-                            } ${(PITCH_HEIGHT * CELL_SIZE) / 2})`}
-                    >
-                        AWAY END ZONE
-                    </text>
-                    <text
-                        x={(PITCH_WIDTH - END_ZONE_WIDTH / 2) * CELL_SIZE}
-                        y={(PITCH_HEIGHT * CELL_SIZE) / 2}
-                        textAnchor="middle"
-                        fill="white"
-                        fontSize="12"
-                        transform={`rotate(90 ${(PITCH_WIDTH - END_ZONE_WIDTH / 2) * CELL_SIZE
-                            } ${(PITCH_HEIGHT * CELL_SIZE) / 2})`}
-                    >
-                        HOME END ZONE
-                    </text>
-
-                    {/* Scrimmage & wide zone lines */}
-                    <line
-                        x1={(PITCH_WIDTH * CELL_SIZE) / 2}
-                        y1={0}
-                        x2={(PITCH_WIDTH * CELL_SIZE) / 2}
-                        y2={PITCH_HEIGHT * CELL_SIZE}
-                        stroke="#15803d"
-                        strokeWidth="3"
-                        strokeDasharray="8,4"
-                    />
-                    <line
-                        x1={0}
-                        y1={4 * CELL_SIZE}
-                        x2={PITCH_WIDTH * CELL_SIZE}
-                        y2={4 * CELL_SIZE}
-                        stroke="#15803d"
-                        strokeWidth="3"
-                    />
-                    <line
-                        x1={0}
-                        y1={(PITCH_HEIGHT - 4) * CELL_SIZE}
-                        x2={PITCH_WIDTH * CELL_SIZE}
-                        y2={(PITCH_HEIGHT - 4) * CELL_SIZE}
-                        stroke="#15803d"
-                        strokeWidth="3"
-                    />
-
-                    {/* Ball */}
-                    {gameState.ball && !gameState.ballCarrier && (
-                        <circle
-                            cx={gameState.ball.x * CELL_SIZE + CELL_SIZE / 2}
-                            cy={gameState.ball.y * CELL_SIZE + CELL_SIZE / 2}
-                            r={8}
-                            fill="#fbbf24"
-                            stroke="#92400e"
-                            strokeWidth="2"
-                        />
-                    )}
-
-                    {/* Players */}
-                    {gameState.players.map((player: Player) => (
-                        <g
-                            key={player.id}
-                            onClick={() =>
-                                handleCellClick(player.position.x, player.position.y)
-                            }
+                        {/* End zone labels */}
+                        <text
+                            x={(END_ZONE_WIDTH * CELL_SIZE) / 2}
+                            y={(PITCH_HEIGHT * CELL_SIZE) / 2}
+                            textAnchor="middle"
+                            fill="white"
+                            fontSize="12"
+                            transform={`rotate(-90 ${(END_ZONE_WIDTH * CELL_SIZE) / 2
+                                } ${(PITCH_HEIGHT * CELL_SIZE) / 2})`}
                         >
-                            <circle
-                                cx={player.position.x * CELL_SIZE + CELL_SIZE / 2}
-                                cy={player.position.y * CELL_SIZE + CELL_SIZE / 2}
-                                r={7}
-                                fill={
-                                    player.status === "down"
-                                        ? "#6b7280"
-                                        : player.team === "home"
-                                            ? "#3b82f6"
-                                            : "#ef4444"
-                                }
-                                stroke={
-                                    player.id === gameState.selectedPlayer ? "#fbbf24" : "#000"
-                                }
-                                strokeWidth={player.id === gameState.selectedPlayer ? 3 : 1}
-                                className="cursor-pointer"
-                                opacity={player.status === "down" ? 0.5 : 1}
-                            />
+                            AWAY END ZONE
+                        </text>
+                        <text
+                            x={(PITCH_WIDTH - END_ZONE_WIDTH / 2) * CELL_SIZE}
+                            y={(PITCH_HEIGHT * CELL_SIZE) / 2}
+                            textAnchor="middle"
+                            fill="white"
+                            fontSize="12"
+                            transform={`rotate(90 ${(PITCH_WIDTH - END_ZONE_WIDTH / 2) * CELL_SIZE
+                                } ${(PITCH_HEIGHT * CELL_SIZE) / 2})`}
+                        >
+                            HOME END ZONE
+                        </text>
 
-                            {/* Ball indicator */}
-                            {gameState.ballCarrier === player.id && (
+                        {/* Scrimmage & wide zone lines */}
+                        <line
+                            x1={(PITCH_WIDTH * CELL_SIZE) / 2}
+                            y1={0}
+                            x2={(PITCH_WIDTH * CELL_SIZE) / 2}
+                            y2={PITCH_HEIGHT * CELL_SIZE}
+                            stroke="#15803d"
+                            strokeWidth="3"
+                            strokeDasharray="8,4"
+                        />
+                        <line
+                            x1={0}
+                            y1={4 * CELL_SIZE}
+                            x2={PITCH_WIDTH * CELL_SIZE}
+                            y2={4 * CELL_SIZE}
+                            stroke="#15803d"
+                            strokeWidth="3"
+                        />
+                        <line
+                            x1={0}
+                            y1={(PITCH_HEIGHT - 4) * CELL_SIZE}
+                            x2={PITCH_WIDTH * CELL_SIZE}
+                            y2={(PITCH_HEIGHT - 4) * CELL_SIZE}
+                            stroke="#15803d"
+                            strokeWidth="3"
+                        />
+
+                        {/* Ball */}
+                        {gameState.ball && !gameState.ballCarrier && (
+                            <circle
+                                cx={gameState.ball.x * CELL_SIZE + CELL_SIZE / 2}
+                                cy={gameState.ball.y * CELL_SIZE + CELL_SIZE / 2}
+                                r={8}
+                                fill="#fbbf24"
+                                stroke="#92400e"
+                                strokeWidth="2"
+                            />
+                        )}
+
+                        {/* Players */}
+                        {gameState.players.map((player: Player) => (
+                            <g
+                                key={player.id}
+                                onClick={() =>
+                                    handleCellClick(player.position.x, player.position.y)
+                                }
+                            >
                                 <circle
                                     cx={player.position.x * CELL_SIZE + CELL_SIZE / 2}
                                     cy={player.position.y * CELL_SIZE + CELL_SIZE / 2}
-                                    r={6}
-                                    fill="#fbbf24"
+                                    r={7}
+                                    fill={
+                                        player.status === "down"
+                                            ? "#6b7280"
+                                            : player.team === "home"
+                                                ? "#3b82f6"
+                                                : "#ef4444"
+                                    }
+                                    stroke={
+                                        player.id === gameState.selectedPlayer ? "#fbbf24" : "#000"
+                                    }
+                                    strokeWidth={player.id === gameState.selectedPlayer ? 3 : 1}
+                                    className="cursor-pointer"
+                                    opacity={player.status === "down" ? 0.5 : 1}
                                 />
-                            )}
 
-                            {/* Player ID */}
-                            <text
-                                x={player.position.x * CELL_SIZE + CELL_SIZE / 2}
-                                y={player.position.y * CELL_SIZE + CELL_SIZE / 2 + 4}
-                                textAnchor="middle"
-                                fill="white"
-                                fontSize="8"
-                                fontWeight="bold"
-                                pointerEvents="none"
-                            >
-                                {player.id}
-                            </text>
+                                {/* Ball indicator */}
+                                {gameState.ballCarrier === player.id && (
+                                    <circle
+                                        cx={player.position.x * CELL_SIZE + CELL_SIZE / 2}
+                                        cy={player.position.y * CELL_SIZE + CELL_SIZE / 2}
+                                        r={6}
+                                        fill="#fbbf24"
+                                    />
+                                )}
 
-                            {/* Player status */}
-                            <text
-                                x={player.position.x * CELL_SIZE + CELL_SIZE / 2}
-                                y={player.position.y * CELL_SIZE + CELL_SIZE / 2 + 13}
-                                textAnchor="middle"
-                                fill="white"
-                                fontSize="6"
-                                pointerEvents="none"
-                            >
-                                {player.status}
-                            </text>
-                        </g>
-                    ))}
-                </svg>
+                                {/* Player ID */}
+                                <text
+                                    x={player.position.x * CELL_SIZE + CELL_SIZE / 2}
+                                    y={player.position.y * CELL_SIZE + CELL_SIZE / 2 + 4}
+                                    textAnchor="middle"
+                                    fill="white"
+                                    fontSize="8"
+                                    fontWeight="bold"
+                                    pointerEvents="none"
+                                >
+                                    {player.id}
+                                </text>
+
+                                {/* Player status */}
+                                <text
+                                    x={player.position.x * CELL_SIZE + CELL_SIZE / 2}
+                                    y={player.position.y * CELL_SIZE + CELL_SIZE / 2 + 13}
+                                    textAnchor="middle"
+                                    fill="white"
+                                    fontSize="6"
+                                    pointerEvents="none"
+                                >
+                                    {player.status}
+                                </text>
+                            </g>
+                        ))}
+                    </svg>
+                </div>
+                <div style={{ width: "15%" }}>
+                    <GameLog />
+                </div>
             </div>
         </div>
     );

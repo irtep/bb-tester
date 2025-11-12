@@ -1,9 +1,8 @@
-import React, { useEffect} from 'react';
+import React, { useEffect } from 'react';
 
 import { useGame } from "../context/GameContext";
 import Instructions from './Introductions';
 import GameHeader from './GameHeader';
-import GameLog from './GameLog';
 import ActionMenu from './ActionMenu';
 import GameBoard from './GameBoard';
 
@@ -25,7 +24,10 @@ const Blood_Bowl: React.FC = () => {
         <GameHeader />
         <div>
           <div>
-            <GameLog />
+            <h4>Current Turn</h4>
+            <p>
+              {`${gameState.currentTeam.toUpperCase()} `}
+            </p>
             <div>
               <ActionMenu />
               <GameBoard />
