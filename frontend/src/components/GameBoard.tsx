@@ -1,31 +1,52 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useGame } from '../context/GameContext';
 import { CELL_SIZE, END_ZONE_WIDTH, PITCH_HEIGHT, PITCH_WIDTH } from './Blood_Bowl';
-import { callDice } from '../functions/gameFunctions';
-import type { Player, PlayerStatus } from '../types/types';
 import GameLog from './GameLog';
 import Bench from './Bench';
+import ShowPlayersOnField from './ShowPlayersOnField';
+
+type TeamKey = 'team1' | 'team2';
 
 const GameBoard: React.FC = (): React.ReactElement => {
     const { gameState,
-        addLog,
         setGameState
     } = useGame();
 
     function selectPlayer(playerId: string) {
-        const player = gameState.players.find(p => p.id === playerId);
-        if (!player || player.team !== gameState.currentTeam || player.status !== 'standing') {
-            return;
-        }
-
         setGameState(prev => ({
             ...prev,
             selectedPlayer: playerId,
-            validMoves: [],
-            actionPhase: 'select_action'
+            validMoves: []
         }));
     }
 
+    const teleportPlayer = (
+        teamKey: TeamKey,
+        playerId: string,
+        targetX: number,
+        targetY: number,
+        newStatus: string
+    ) => {
+        setGameState(prev => ({
+            ...prev,
+            [teamKey]: {
+                ...prev[teamKey],
+                players: prev[teamKey].players.map(p =>
+                    p.id === playerId ? { ...p, position: { x: targetX, y: targetY }, status: newStatus } : p
+                )
+            }
+        }));
+    };
+
+    const unSelectAndUnAction = () => {
+        setGameState(prev => ({
+            ...prev,
+            selectedPlayer: null,
+            actionPhase: null
+        }));
+    };
+
+    /*
     async function movePlayer(targetX: number, targetY: number) {
         if (!gameState.selectedPlayer) return;
 
@@ -67,195 +88,243 @@ const GameBoard: React.FC = (): React.ReactElement => {
             actionPhase: null
         }));
     }
-
+    */
 
     // 8-direction step-by-step pathfinder (simple direct line)
-    function findPath(start: { x: number; y: number }, end: { x: number; y: number }) {
-        const path: { x: number; y: number }[] = [];
-        let { x, y } = start;
-
-        while (x !== end.x || y !== end.y) {
-            let dx = end.x - x;
-            let dy = end.y - y;
-
-            // Normalize step to -1, 0, or +1 in each direction
-            if (dx !== 0) dx = dx > 0 ? 1 : -1;
-            if (dy !== 0) dy = dy > 0 ? 1 : -1;
-
-            x += dx;
-            y += dy;
-
-            path.push({ x, y });
-        }
-
-        return path;
-    }
-
-
-    function attemptBlock(targetId: string) {
-        if (!gameState.selectedPlayer) return;
-
-        const attacker = gameState.players.find(p => p.id === gameState.selectedPlayer);
-        const defender = gameState.players.find(p => p.id === targetId);
-
-        if (!attacker || !defender) return;
-
-        // Check adjacency
-        const adjacent = Math.abs(attacker.position.x - defender.position.x) <= 1 &&
-            Math.abs(attacker.position.y - defender.position.y) <= 1;
-
-        if (!adjacent) {
-            addLog('Target must be adjacent!');
-            return;
-        }
-
-        // Simplified block: compare strength
-        const roll = callDice(6);
-
-        const success = roll + attacker.st > defender.st + 3;
-
-        if (success) {
-            const updatedPlayers = gameState.players.map(p =>
-                p.id === targetId ? { ...p, status: 'down' as PlayerStatus } : p
-            );
-
-            // Ball scatters if carrier knocked down
-            let newBall = gameState.ball;
-            let newBallCarrier = gameState.ballCarrier;
-
-            if (gameState.ballCarrier === targetId) {
-                newBall = { ...defender.position };
-                newBallCarrier = null;
-                addLog(`Ball carrier knocked down! Ball scatters!`);
+    /*
+        function findPath(start: { x: number; y: number }, end: { x: number; y: number }) {
+            const path: { x: number; y: number }[] = [];
+            let { x, y } = start;
+    
+            while (x !== end.x || y !== end.y) {
+                let dx = end.x - x;
+                let dy = end.y - y;
+    
+                // Normalize step to -1, 0, or +1 in each direction
+                if (dx !== 0) dx = dx > 0 ? 1 : -1;
+                if (dy !== 0) dy = dy > 0 ? 1 : -1;
+    
+                x += dx;
+                y += dy;
+    
+                path.push({ x, y });
             }
-
-            addLog(`${attacker.id} blocks ${defender.id} down!`);
-
+    
+            return path;
+        }
+    */
+    /*
+        function attemptBlock(targetId: string) {
+            if (!gameState.selectedPlayer) return;
+    
+            const attacker = gameState.players.find(p => p.id === gameState.selectedPlayer);
+            const defender = gameState.players.find(p => p.id === targetId);
+    
+            if (!attacker || !defender) return;
+    
+            // Check adjacency
+            const adjacent = Math.abs(attacker.position.x - defender.position.x) <= 1 &&
+                Math.abs(attacker.position.y - defender.position.y) <= 1;
+    
+            if (!adjacent) {
+                addLog('Target must be adjacent!');
+                return;
+            }
+    
+            // Simplified block: compare strength
+            const roll = callDice(6);
+    
+            const success = roll + attacker.st > defender.st + 3;
+    
+            if (success) {
+                const updatedPlayers = gameState.players.map(p =>
+                    p.id === targetId ? { ...p, status: 'down' as PlayerStatus } : p
+                );
+    
+                // Ball scatters if carrier knocked down
+                let newBall = gameState.ball;
+                let newBallCarrier = gameState.ballCarrier;
+    
+                if (gameState.ballCarrier === targetId) {
+                    newBall = { ...defender.position };
+                    newBallCarrier = null;
+                    addLog(`Ball carrier knocked down! Ball scatters!`);
+                }
+    
+                addLog(`${attacker.id} blocks ${defender.id} down!`);
+    
+                setGameState(prev => ({
+                    ...prev,
+                    players: updatedPlayers.map(p =>
+                        p.id === attacker.id ? { ...p, hasActed: true } : p
+                    ),
+                    ball: newBall,
+                    ballCarrier: newBallCarrier,
+                    selectedPlayer: null,
+                    validMoves: [],
+                    actionPhase: null
+                }));
+            } else {
+                addLog(`Block failed!`);
+                setGameState(prev => ({
+                    ...prev,
+                    selectedPlayer: null,
+                    validMoves: [],
+                    actionPhase: null
+                }));
+            }
+        }
+    */
+    /*
+        function attemptHandoff(targetId: string) {
+            if (!gameState.selectedPlayer || gameState.ballCarrier !== gameState.selectedPlayer) return;
+    
+            const passer = gameState.players.find(p => p.id === gameState.selectedPlayer);
+            const receiver = gameState.players.find(p => p.id === targetId);
+    
+            if (!passer || !receiver || receiver.team !== passer.team) return;
+    
+            // Check adjacency
+            const adjacent = Math.abs(passer.position.x - receiver.position.x) <= 1 &&
+                Math.abs(passer.position.y - receiver.position.y) <= 1;
+    
+            if (!adjacent) {
+                addLog('Receiver must be adjacent!');
+                return;
+            }
+    
+            addLog(`${passer.id} hands off to ${receiver.id}!`);
+    
             setGameState(prev => ({
                 ...prev,
-                players: updatedPlayers.map(p =>
-                    p.id === attacker.id ? { ...p, hasActed: true } : p
-                ),
-                ball: newBall,
-                ballCarrier: newBallCarrier,
-                selectedPlayer: null,
-                validMoves: [],
-                actionPhase: null
-            }));
-        } else {
-            addLog(`Block failed!`);
-            setGameState(prev => ({
-                ...prev,
+                ballCarrier: receiver.id,
                 selectedPlayer: null,
                 validMoves: [],
                 actionPhase: null
             }));
         }
-    }
-
-    function attemptHandoff(targetId: string) {
-        if (!gameState.selectedPlayer || gameState.ballCarrier !== gameState.selectedPlayer) return;
-
-        const passer = gameState.players.find(p => p.id === gameState.selectedPlayer);
-        const receiver = gameState.players.find(p => p.id === targetId);
-
-        if (!passer || !receiver || receiver.team !== passer.team) return;
-
-        // Check adjacency
-        const adjacent = Math.abs(passer.position.x - receiver.position.x) <= 1 &&
-            Math.abs(passer.position.y - receiver.position.y) <= 1;
-
-        if (!adjacent) {
-            addLog('Receiver must be adjacent!');
-            return;
+    */
+    /*
+        function attemptFoul(targetId: string) {
+            if (!gameState.selectedPlayer) return;
+    
+            const fouler = gameState.players.find(p => p.id === gameState.selectedPlayer);
+            const target = gameState.players.find(p => p.id === targetId);
+    
+            if (!fouler || !target || target.status !== 'down') return;
+    
+            // Check adjacency
+            const adjacent = Math.abs(fouler.position.x - target.position.x) <= 1 &&
+                Math.abs(fouler.position.y - target.position.y) <= 1;
+    
+            if (!adjacent) {
+                addLog('Target must be adjacent!');
+                return;
+            }
+    
+            const roll = callDice(6);
+    
+            if (roll >= 5) {
+                const updatedPlayers = gameState.players.map(p =>
+                    p.id === targetId ? { ...p, status: 'ko' as PlayerStatus } : p
+                );
+                addLog(`Foul successful! ${target.id} is knocked out!`);
+    
+                setGameState(prev => ({
+                    ...prev,
+                    players: updatedPlayers,
+                    selectedPlayer: null,
+                    validMoves: [],
+                    actionPhase: null
+                }));
+            } else {
+                addLog(`Foul failed!`);
+                setGameState(prev => ({
+                    ...prev,
+                    selectedPlayer: null,
+                    validMoves: [],
+                    actionPhase: null
+                }));
+            }
         }
-
-        addLog(`${passer.id} hands off to ${receiver.id}!`);
-
-        setGameState(prev => ({
-            ...prev,
-            ballCarrier: receiver.id,
-            selectedPlayer: null,
-            validMoves: [],
-            actionPhase: null
-        }));
-    }
-
-    function attemptFoul(targetId: string) {
-        if (!gameState.selectedPlayer) return;
-
-        const fouler = gameState.players.find(p => p.id === gameState.selectedPlayer);
-        const target = gameState.players.find(p => p.id === targetId);
-
-        if (!fouler || !target || target.status !== 'down') return;
-
-        // Check adjacency
-        const adjacent = Math.abs(fouler.position.x - target.position.x) <= 1 &&
-            Math.abs(fouler.position.y - target.position.y) <= 1;
-
-        if (!adjacent) {
-            addLog('Target must be adjacent!');
-            return;
-        }
-
-        const roll = callDice(6);
-
-        if (roll >= 5) {
-            const updatedPlayers = gameState.players.map(p =>
-                p.id === targetId ? { ...p, status: 'ko' as PlayerStatus } : p
-            );
-            addLog(`Foul successful! ${target.id} is knocked out!`);
-
-            setGameState(prev => ({
-                ...prev,
-                players: updatedPlayers,
-                selectedPlayer: null,
-                validMoves: [],
-                actionPhase: null
-            }));
-        } else {
-            addLog(`Foul failed!`);
-            setGameState(prev => ({
-                ...prev,
-                selectedPlayer: null,
-                validMoves: [],
-                actionPhase: null
-            }));
-        }
-    }
-
+    */
     function handleCellClick(x: number, y: number) {
+       // console.log('clicked ', x, y);
+
+        // Check if clicking on a player
+        const clickedPlayer =
+            [...gameState.team1.players, ...gameState.team2.players].find(
+                p => p.position.x === x && p.position.y === y
+            );
+       // console.log('clicked player: ', clickedPlayer);
+
+        // deploy defence phase:
+        switch (gameState.gamePhase) {
+            case 'deploy defence':
+//                console.log('deploy D !');
+               // if (clickedPlayer)  { selectPlayer(clickedPlayer.id)}
+
+                // if clicks other player that is in turn, select it
+                if (clickedPlayer && clickedPlayer.id !== gameState.selectedPlayer && gameState.currentTeam === clickedPlayer.team) {
+                    console.log('selecting other pl');
+                    selectPlayer(clickedPlayer.id);
+                    return;
+                } else {
+                    console.log(`didn't find other own player: `, clickedPlayer, clickedPlayer?.id !== gameState.selectedPlayer, gameState.currentTeam === clickedPlayer?.team);
+                }
+                // check if occupied
+                const occupied =
+                    [...gameState.team1.players, ...gameState.team2.players].some(
+                        p => p.position.x === x && p.position.y === y && p.status === "standing"
+                    );
+                console.log('if occupied: ', occupied);
+                // if someone is selected and the place is not occupied, move this player to there
+                if (gameState.selectedPlayer && !occupied) {
+                    const teamKey: 'team1' | 'team2' = gameState.currentTeam === gameState.team1.name ? 'team1' : 'team2';
+
+                    console.log('all ok, moving ', gameState.selectedPlayer, ' to ', x, y);
+                    teleportPlayer(teamKey, gameState.selectedPlayer, x, y, 'standby');
+                    // unselect and un order:
+                    unSelectAndUnAction();
+                } else {
+
+                }
+ 
+                return;
+            default: console.log('phase not found ', gameState.gamePhase);
+        }
+
+
         // Check if clicking on a valid move
+        /*
         if (gameState.validMoves.some(m => m.x === x && m.y === y)) {
             movePlayer(x, y);
             return;
         }
+        */
 
-        // Check if clicking on a player
-        const clickedPlayer = gameState.players.find(p =>
-            p.position.x === x && p.position.y === y
-        );
-
-        if (clickedPlayer) {
-            if (clickedPlayer.team === gameState.currentTeam && gameState.actionPhase !== 'block' && gameState.actionPhase !== 'handoff' && gameState.actionPhase !== 'foul') {
-                selectPlayer(clickedPlayer.id);
-            } else if (gameState.selectedPlayer) {
-                // Different actions based on current action phase
-                if (gameState.actionPhase === 'block' || gameState.actionPhase === 'blitz_movement') {
-                    if (clickedPlayer.team !== gameState.currentTeam && clickedPlayer.status === 'standing') {
-                        attemptBlock(clickedPlayer.id);
-                    }
-                } else if (gameState.actionPhase === 'handoff') {
-                    if (clickedPlayer.team === gameState.currentTeam) {
-                        attemptHandoff(clickedPlayer.id);
-                    }
-                } else if (gameState.actionPhase === 'foul') {
-                    if (clickedPlayer.team !== gameState.currentTeam && clickedPlayer.status === 'down') {
-                        attemptFoul(clickedPlayer.id);
+        /*
+                if (clickedPlayer) {
+                    if (clickedPlayer.team === gameState.currentTeam && gameState.actionPhase !== 'block' && gameState.actionPhase !== 'handoff' && gameState.actionPhase !== 'foul') {
+                        selectPlayer(clickedPlayer.id);
+                    } else if (gameState.selectedPlayer) {
+                        // Different actions based on current action phase
+                        if (gameState.actionPhase === 'block' || gameState.actionPhase === 'blitz_movement') {
+                            if (clickedPlayer.team !== gameState.currentTeam && clickedPlayer.status === 'standing') {
+                                attemptBlock(clickedPlayer.id);
+                            }
+                        } else if (gameState.actionPhase === 'handoff') {
+                            if (clickedPlayer.team === gameState.currentTeam) {
+                                attemptHandoff(clickedPlayer.id);
+                            }
+                        } else if (gameState.actionPhase === 'foul') {
+                            if (clickedPlayer.team !== gameState.currentTeam && clickedPlayer.status === 'down') {
+                                attemptFoul(clickedPlayer.id);
+                            }
+                        }
                     }
                 }
-            }
-        }
+                    */
     }
     return (
         <div>
@@ -263,54 +332,11 @@ const GameBoard: React.FC = (): React.ReactElement => {
 
             <div style={{ display: 'flex', width: '100vw' }}>
                 <div style={{ width: "50%" }}>
-                    <Bench team={gameState.team1}/>
+                    <Bench team={gameState.team1} />
                 </div>
 
-                <div style={{
-                    width: '50%',
-                    backgroundColor: '#ef4444',
-                    padding: '8px'
-                }}>
-                    <h2 style={{
-                        fontWeight: 'bold',
-                        fontSize: '1.125rem',
-                        color: '#dc2626',
-                        marginBottom: '0.5rem'
-                    }}>
-                        {gameState.team2.name}
-                    </h2>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-                        gap: '0.5rem'
-                    }}>
-                        {gameState.team2.players.map((p) => (
-                            <div
-                                key={p.id}
-                                style={{
-                                    padding: '0.5rem',
-                                    borderRadius: '0.25rem',
-                                    color: 'white',
-                                    fontSize: '0.875rem',
-                                    textAlign: 'center',
-                                    width: '5rem',
-                                    backgroundColor: p.status === 'down'
-                                        ? '#4b5563'
-                                        : p.status === 'stunned'
-                                            ? '#ca8a04'
-                                            : '#dc2626'
-                                }}
-                            >
-                                <div style={{
-                                    fontWeight: '600',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                }}>{p.name ?? p.id}</div>
-                                <div style={{ fontSize: '0.75rem' }}>#{p.number}</div>
-                            </div>
-                        ))}
-                    </div>
+                <div style={{ width: '50%' }}>
+                    <Bench team={gameState.team2} />
                 </div>
             </div>
 
@@ -352,7 +378,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
                             transform={`rotate(-90 ${(END_ZONE_WIDTH * CELL_SIZE) / 2
                                 } ${(PITCH_HEIGHT * CELL_SIZE) / 2})`}
                         >
-                            AWAY END ZONE
+                            {gameState.team2.name}
                         </text>
                         <text
                             x={(PITCH_WIDTH - END_ZONE_WIDTH / 2) * CELL_SIZE}
@@ -363,7 +389,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
                             transform={`rotate(90 ${(PITCH_WIDTH - END_ZONE_WIDTH / 2) * CELL_SIZE
                                 } ${(PITCH_HEIGHT * CELL_SIZE) / 2})`}
                         >
-                            HOME END ZONE
+                            {gameState.team1.name}
                         </text>
 
                         {/* Scrimmage & wide zone lines */}
@@ -406,68 +432,17 @@ const GameBoard: React.FC = (): React.ReactElement => {
                         )}
 
                         {/* Players */}
-                        {gameState.players.map((player: Player) => (
-                            <g
-                                key={player.id}
-                                onClick={() =>
-                                    handleCellClick(player.position.x, player.position.y)
-                                }
-                            >
-                                <circle
-                                    cx={player.position.x * CELL_SIZE + CELL_SIZE / 2}
-                                    cy={player.position.y * CELL_SIZE + CELL_SIZE / 2}
-                                    r={7}
-                                    fill={
-                                        player.status === "down"
-                                            ? "#6b7280"
-                                            : player.team === "home"
-                                                ? "#3b82f6"
-                                                : "#ef4444"
-                                    }
-                                    stroke={
-                                        player.id === gameState.selectedPlayer ? "#fbbf24" : "#000"
-                                    }
-                                    strokeWidth={player.id === gameState.selectedPlayer ? 3 : 1}
-                                    className="cursor-pointer"
-                                    opacity={player.status === "down" ? 0.5 : 1}
-                                />
+                        <ShowPlayersOnField
+                            team={gameState.team1}
+                            gameState={gameState}
+                            handleCellClick={handleCellClick}
+                        />
+                        <ShowPlayersOnField
+                            team={gameState.team2}
+                            gameState={gameState}
+                            handleCellClick={handleCellClick}
+                        />
 
-                                {/* Ball indicator */}
-                                {gameState.ballCarrier === player.id && (
-                                    <circle
-                                        cx={player.position.x * CELL_SIZE + CELL_SIZE / 2}
-                                        cy={player.position.y * CELL_SIZE + CELL_SIZE / 2}
-                                        r={6}
-                                        fill="#fbbf24"
-                                    />
-                                )}
-
-                                {/* Player ID */}
-                                <text
-                                    x={player.position.x * CELL_SIZE + CELL_SIZE / 2}
-                                    y={player.position.y * CELL_SIZE + CELL_SIZE / 2 + 4}
-                                    textAnchor="middle"
-                                    fill="white"
-                                    fontSize="8"
-                                    fontWeight="bold"
-                                    pointerEvents="none"
-                                >
-                                    {player.id}
-                                </text>
-
-                                {/* Player status */}
-                                <text
-                                    x={player.position.x * CELL_SIZE + CELL_SIZE / 2}
-                                    y={player.position.y * CELL_SIZE + CELL_SIZE / 2 + 13}
-                                    textAnchor="middle"
-                                    fill="white"
-                                    fontSize="6"
-                                    pointerEvents="none"
-                                >
-                                    {player.status}
-                                </text>
-                            </g>
-                        ))}
                     </svg>
                 </div>
                 <div style={{ width: "15%" }}>

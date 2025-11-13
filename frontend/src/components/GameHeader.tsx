@@ -6,11 +6,11 @@ import { callDice } from '../functions/gameFunctions';
 const GameHeader: React.FC = (): React.ReactElement => {
     const { gameState, setGameState, addLog } = useGame();
 
-    const tossCoin = () => {
+    const tossCoin = (team1Name: string, team2Name: string) => {
         const toss = callDice(2);
         let current = '';
 
-        if (toss === 1) { current = 'home' } else { current = 'away' };
+        if (toss === 1) { current = team1Name } else { current = team2Name };
 
         addLog(`${current} receives! and deploys now a defence formation.`);
 
@@ -27,13 +27,14 @@ const GameHeader: React.FC = (): React.ReactElement => {
         const nextHalf = nextTurn > 8 && gameState.half === 1 ? 2 : gameState.half;
 
         // Reset players for new turn
+        /*
         const resetPlayers = gameState.players.map(p => ({
             ...p,
             hasMoved: false,
             hasActed: false,
             status: p.status === 'down' ? 'standing' : p.status
         }));
-
+*/
         addLog(`Turn ${nextTurn}, ${nextTeam} team's turn`);
 
         setGameState(prev => ({
@@ -41,7 +42,7 @@ const GameHeader: React.FC = (): React.ReactElement => {
             currentTeam: nextTeam,
             turn: nextTurn > 8 ? 1 : nextTurn,
             half: nextHalf,
-            players: resetPlayers,
+           // players: resetPlayers,
             selectedPlayer: null,
             validMoves: [],
             actionPhase: null,
@@ -72,7 +73,7 @@ const GameHeader: React.FC = (): React.ReactElement => {
                     (gameState.gamePhase === 'coin toss') ?
                         <>
                             <button
-                                onClick={tossCoin}
+                                onClick={ () => { tossCoin(gameState.team1.name, gameState.team2.name) }}
                                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold"
                             >
                                 Toss a coin to determine who kicks off

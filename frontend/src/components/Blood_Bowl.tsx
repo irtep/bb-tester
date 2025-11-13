@@ -10,6 +10,10 @@ export const PITCH_WIDTH = 26;
 export const PITCH_HEIGHT = 15;
 export const END_ZONE_WIDTH = 1;
 export const CELL_SIZE = 50;
+export const VERY_SMALL_BASE = 7;
+export const SMALL_BASE = 10;
+export const MEDIUM_BASE = 15;
+export const BIG_BASE = 25;
 
 const Blood_Bowl: React.FC = () => {
   const { gameState } = useGame();

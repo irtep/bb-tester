@@ -12,13 +12,13 @@ export const defaultPlayer : Player = {
     ag: 3,
     pa: 4,
     av: 8,
-    status: 'standby',
+    status: 'on bench',
     hasMoved: false,
     hasActed: false,
     movementLeft: 6,
     blitzesLeft: 2,
     skills: [],
-    baseSize: 15, // 7 mini, 10 small, 15 medium, 25 big, 
+    baseSize: 'medium', // very small, small, medium, big
     value: 40000,
     injuries: [],
     holdingBall: false
