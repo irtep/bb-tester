@@ -21,5 +21,6 @@ export const defaultPlayer : Player = {
     baseSize: 'medium', // very small, small, medium, big
     value: 40000,
     injuries: [],
-    holdingBall: false
+    holdingBall: false,
+    onField: false
 };

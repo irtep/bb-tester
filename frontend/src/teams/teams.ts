@@ -16,6 +16,7 @@ import type { BloodBowlTeam } from "../types/types";
 export const sampleTeams: BloodBowlTeam[] = [
     {
         id: 'example1',
+        homeTeam: true,
         name: 'Super Team 1',
         teamColors: {color1: 'blue', color2: 'white'},
         type: 'human',
@@ -45,6 +46,7 @@ export const sampleTeams: BloodBowlTeam[] = [
     },
     {
         id: 'example2',
+        homeTeam: false,
         name: 'Excellent team',
         teamColors: {color1: 'darkRed', color2: 'rgb(179, 179, 179)'},
         type: 'human',
