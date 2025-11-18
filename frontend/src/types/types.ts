@@ -5,6 +5,7 @@
 
 export interface BloodBowlTeam {
   id: string;
+  homeTeam: boolean;
   teamColors: {color1: string, color2: string};
   name: string;
   type: string; // for example human
@@ -38,13 +39,14 @@ export interface Player {
   value: number;
   injuries: string[];
   holdingBall: boolean;
+  onField: boolean;
 }
 
 export interface GameState {
   ball: { x: number; y: number } | null;
   ballCarrier: string | null;
   currentTeam: string;
-  gamePhase: 'coin toss' | 'decide kicker' | 'deploy defence' | 'deploy offense' | 'game';
+  gamePhase: 'coin toss' | 'decide kicker' | 'deploy defence' | 'deploy offense' | 'game' | 'kick off';
   turn: number;
   half: number;
   score: { home: number; away: number };

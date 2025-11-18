@@ -2,6 +2,7 @@ import { Trophy } from 'lucide-react';
 import React from 'react';
 import { useGame } from '../context/GameContext';
 import { callDice } from '../functions/gameFunctions';
+import type { Player } from '../types/types';
 
 const GameHeader: React.FC = (): React.ReactElement => {
     const { gameState, setGameState, addLog } = useGame();
@@ -20,6 +21,66 @@ const GameHeader: React.FC = (): React.ReactElement => {
             gamePhase: 'deploy defence'
         }));
     }
+
+    const isTeamDeployed = (homeTeam: boolean, players: Player[], defence: boolean) => {
+        // Define deployment zones based on team
+        const scrimmageX = homeTeam ? 12 : 13;
+        const validSide = homeTeam ? (x: number) => x <= 12 : (x: number) => x >= 13;
+
+        // Count players in different zones
+        let scrimmagePlayers = 0;
+        let wideZone1Players = 0; // y: 0-3
+        let wideZone2Players = 0; // y: 11-14
+
+        // Check each player
+        for (const player of players) {
+            const { x, y } = player.position;
+
+            // Rule 4: Check if player is on correct side of pitch
+            if (!validSide(x) && player.onField) {
+                addLog(`Player at (${x}, ${y}) is on the wrong side of the pitch`)
+            }
+
+            // Count players in scrimmage line
+            if (x === scrimmageX && player.onField) {
+                scrimmagePlayers++;
+            }
+
+            // Count players in wide zones
+            if (y >= 0 && y <= 3 && player.onField) {
+                wideZone1Players++;
+            }
+            if (y >= 11 && y <= 14 && player.onField) {
+                wideZone2Players++;
+            }
+        }
+
+        // Rule 1: Check minimum 3 players on line of scrimmage
+        if (scrimmagePlayers < 3) {
+            addLog(`Only ${scrimmagePlayers} players on line of scrimmage. Minimum 3 required.`);
+            return;
+        }
+
+        // Rule 2: Check maximum 2 players in each wide zone
+        if (wideZone1Players > 2) {
+            addLog(`${wideZone1Players} players in wide zone 1 (y: 0-3). Maximum 2 allowed.`);
+            return;
+        }
+
+        if (wideZone2Players > 2) {
+            addLog(`${wideZone2Players} players in wide zone 1 (y: 0-3). Maximum 2 allowed.`);
+            return;
+        }
+
+        // All checks passed
+
+        addLog(`Defensive formation deployed. Offensive deploys now.`);
+
+        setGameState(prev => ({
+            ...prev,
+            gamePhase: defence ? 'deploy offense' : 'kick off'
+        }));
+    };
 
     function endTurn() {
         const nextTeam = gameState.currentTeam === 'home' ? 'away' : 'home';
@@ -42,7 +103,7 @@ const GameHeader: React.FC = (): React.ReactElement => {
             currentTeam: nextTeam,
             turn: nextTurn > 8 ? 1 : nextTurn,
             half: nextHalf,
-           // players: resetPlayers,
+            // players: resetPlayers,
             selectedPlayer: null,
             validMoves: [],
             actionPhase: null,
@@ -73,10 +134,54 @@ const GameHeader: React.FC = (): React.ReactElement => {
                     (gameState.gamePhase === 'coin toss') ?
                         <>
                             <button
-                                onClick={ () => { tossCoin(gameState.team1.name, gameState.team2.name) }}
+                                onClick={() => { tossCoin(gameState.team1.name, gameState.team2.name) }}
                                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold"
                             >
                                 Toss a coin to determine who kicks off
+                            </button>
+                        </> : <></>
+                }
+
+
+                {
+                    (gameState.gamePhase === 'deploy defence') ?
+                        <>
+                            <button
+                                onClick={() => {
+                                    let isTeam1 = false;
+                                    let isHomeTeam = false;
+
+                                    if (gameState.currentTeam === gameState.team1.name) { isTeam1 = true; }
+                                    if (isTeam1 && gameState.team1.homeTeam || !isTeam1 && gameState.team2.homeTeam) { isHomeTeam = true; }
+
+                                    isTeamDeployed(isHomeTeam, isTeam1 ? gameState.team1.players : gameState.team2.players, true)
+
+                                }}
+                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold"
+                            >
+                                Defence Deployment is ready.
+                            </button>
+                        </> : <></>
+                }
+
+
+                {
+                    (gameState.gamePhase === 'deploy offense') ?
+                        <>
+                            <button
+                                onClick={() => {
+                                    let isTeam1 = false;
+                                    let isHomeTeam = false;
+
+                                    if (gameState.currentTeam === gameState.team1.name) { isTeam1 = true; }
+                                    if (isTeam1 && gameState.team1.homeTeam || !isTeam1 && gameState.team2.homeTeam) { isHomeTeam = true; }
+
+                                    isTeamDeployed(isHomeTeam, isTeam1 ? gameState.team1.players : gameState.team2.players, false)
+
+                                }}
+                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold"
+                            >
+                                Offense Deployment is ready.
                             </button>
                         </> : <></>
                 }

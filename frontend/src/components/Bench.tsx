@@ -52,7 +52,7 @@ const Bench: React.FC<BenchProps> = ({ team }) => {
                             </div>
                             <div>{p.status}</div>
                             {
-                                (gameState.currentTeam === team.name && gameState.gamePhase === 'deploy defence' && gameState.selectedPlayer !== p.id) ?
+                                (gameState.currentTeam === team.name && (gameState.gamePhase === 'deploy defence' ||  gameState.gamePhase === 'deploy offense') && gameState.selectedPlayer !== p.id) ?
                                     <button
                                         onClick={() => {
                                             setGameState(prev => ({

@@ -32,7 +32,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
             [teamKey]: {
                 ...prev[teamKey],
                 players: prev[teamKey].players.map(p =>
-                    p.id === playerId ? { ...p, position: { x: targetX, y: targetY }, status: newStatus } : p
+                    p.id === playerId ? { ...p, position: { x: targetX, y: targetY }, status: newStatus, onField: true } : p
                 )
             }
         }));
@@ -249,51 +249,43 @@ const GameBoard: React.FC = (): React.ReactElement => {
         }
     */
     function handleCellClick(x: number, y: number) {
-       // console.log('clicked ', x, y);
+        // console.log('clicked ', x, y);
 
         // Check if clicking on a player
         const clickedPlayer =
             [...gameState.team1.players, ...gameState.team2.players].find(
                 p => p.position.x === x && p.position.y === y
             );
-       // console.log('clicked player: ', clickedPlayer);
+        // console.log('clicked player: ', clickedPlayer);
 
-        // deploy defence phase:
-        switch (gameState.gamePhase) {
-            case 'deploy defence':
-//                console.log('deploy D !');
-               // if (clickedPlayer)  { selectPlayer(clickedPlayer.id)}
-
-                // if clicks other player that is in turn, select it
-                if (clickedPlayer && clickedPlayer.id !== gameState.selectedPlayer && gameState.currentTeam === clickedPlayer.team) {
-                    console.log('selecting other pl');
-                    selectPlayer(clickedPlayer.id);
-                    return;
-                } else {
-                    console.log(`didn't find other own player: `, clickedPlayer, clickedPlayer?.id !== gameState.selectedPlayer, gameState.currentTeam === clickedPlayer?.team);
-                }
-                // check if occupied
-                const occupied =
-                    [...gameState.team1.players, ...gameState.team2.players].some(
-                        p => p.position.x === x && p.position.y === y && p.status === "standing"
-                    );
-                console.log('if occupied: ', occupied);
-                // if someone is selected and the place is not occupied, move this player to there
-                if (gameState.selectedPlayer && !occupied) {
-                    const teamKey: 'team1' | 'team2' = gameState.currentTeam === gameState.team1.name ? 'team1' : 'team2';
-
-                    console.log('all ok, moving ', gameState.selectedPlayer, ' to ', x, y);
-                    teleportPlayer(teamKey, gameState.selectedPlayer, x, y, 'standby');
-                    // unselect and un order:
-                    unSelectAndUnAction();
-                } else {
-
-                }
- 
+        // deploy defence and offense phase:
+        if (gameState.gamePhase === 'deploy defence' || gameState.gamePhase === 'deploy offense') {
+            // if clicks other player that is in turn, select it
+            if (clickedPlayer && clickedPlayer.id !== gameState.selectedPlayer && gameState.currentTeam === clickedPlayer.team) {
+                console.log('selecting other pl');
+                selectPlayer(clickedPlayer.id);
                 return;
-            default: console.log('phase not found ', gameState.gamePhase);
-        }
+            } else {
+                console.log(`didn't find other own player: `, clickedPlayer, clickedPlayer?.id !== gameState.selectedPlayer, gameState.currentTeam === clickedPlayer?.team);
+            }
+            // check if occupied
+            const occupied =
+                [...gameState.team1.players, ...gameState.team2.players].some(
+                    p => p.position.x === x && p.position.y === y && p.status === "standing"
+                );
+            console.log('if occupied: ', occupied);
+            // if someone is selected and the place is not occupied, move this player to there
+            if (gameState.selectedPlayer && !occupied) {
+                const teamKey: 'team1' | 'team2' = gameState.currentTeam === gameState.team1.name ? 'team1' : 'team2';
 
+                console.log('all ok, moving ', gameState.selectedPlayer, ' to ', x, y);
+                teleportPlayer(teamKey, gameState.selectedPlayer, x, y, 'standby');
+                // unselect and un order:
+                unSelectAndUnAction();
+            } else {
+
+            }
+        }
 
         // Check if clicking on a valid move
         /*
