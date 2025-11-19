@@ -18,33 +18,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
             validMoves: []
         }));
     }
-
-    const deviateBall = () => {
-        let directionDice: number = callDice(8);
-        let distanceDice: number = callDice(6);
-
-        const directionMap: Record<number, { x: number; y: number }> = {
-            1: { x: 0, y: -1 },   // North
-            2: { x: 1, y: -1 },   // Northeast
-            3: { x: 1, y: 0 },    // East
-            4: { x: 1, y: 1 },    // Southeast
-            5: { x: 0, y: 1 },    // South
-            6: { x: -1, y: 1 },   // Southwest
-            7: { x: -1, y: 0 },   // West
-            8: { x: -1, y: -1 }   // Northwest
-        };
-
-        const direction = directionMap[directionDice];
-
-        setGameState(prev => ({
-            ...prev,
-            ball: {
-                x: prev.ball.x + (direction.x * distanceDice),
-                y: prev.ball.y + (direction.y * distanceDice)
-            }
-        }));
-    };
-
+    
     const teleportPlayer = (
         teamKey: TeamKey,
         playerId: string,

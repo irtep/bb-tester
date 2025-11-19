@@ -1,7 +1,7 @@
 import { Trophy } from 'lucide-react';
 import React from 'react';
 import { useGame } from '../context/GameContext';
-import { callDice } from '../functions/gameFunctions';
+import { callDice, deviateBall } from '../functions/gameFunctions';
 import type { Player } from '../types/types';
 
 const GameHeader: React.FC = (): React.ReactElement => {
@@ -13,7 +13,7 @@ const GameHeader: React.FC = (): React.ReactElement => {
 
         if (toss === 1) { current = team1Name } else { current = team2Name };
 
-        addLog(`${current} receives! and deploys now a defence formation.`);
+        addLog(`${current} kicks! and deploys now a defence formation.`);
 
         setGameState(prev => ({
             ...prev,
@@ -90,8 +90,20 @@ const GameHeader: React.FC = (): React.ReactElement => {
 
         setGameState(prev => ({
             ...prev,
+            // if offensive deployed, place the ball to sweet spot, else can stay in -1 -1
+            ball: !defence ?
+                (gameState.currentTeam === gameState.team1.name ? deviateBall({x: 6, y: 6}): deviateBall({x: 20, y: 6})) :
+                prev.ball,
             gamePhase: defence ? 'deploy offense' : 'kick off',
+
+            /* will be like that when proper kick off is coded, where kicker places the ball:
             currentTeam: (gameState.currentTeam === gameState.team1.name) ? gameState.team2.name : gameState.team1.name
+            but now when it is just placed to "sweet spot", team in offense continues */
+
+            // if goes to temporary kick, the current team doesn't change
+            currentTeam: defence ? 
+                ((gameState.currentTeam === gameState.team1.name) ? gameState.team2.name : gameState.team1.name) :
+                prev.currentTeam
         }));
     };
 
