@@ -16,7 +16,7 @@ export const defaultPlayer : Player = {
     hasMoved: false,
     hasActed: false,
     movementLeft: 6,
-    blitzesLeft: 2,
+    rushesLeft: 2,
     skills: [],
     baseSize: 'medium', // very small, small, medium, big
     value: 40000,

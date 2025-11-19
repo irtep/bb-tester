@@ -42,7 +42,8 @@ export const sampleTeams: BloodBowlTeam[] = [
             wins: 0, draws: 0, touchdowns: 0, casualties: 0
         },
         goalsInthisMatch: 0,
-        casualtiesInThisMatch: 0
+        casualtiesInThisMatch: 0,
+        turn: 0
     },
     {
         id: 'example2',
@@ -69,6 +70,7 @@ export const sampleTeams: BloodBowlTeam[] = [
             wins: 0, draws: 0, touchdowns: 0, casualties: 0
         },
         goalsInthisMatch: 0,
-        casualtiesInThisMatch: 0
+        casualtiesInThisMatch: 0,
+        turn: 0
     }
 ];

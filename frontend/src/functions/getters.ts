@@ -1,7 +1,7 @@
 import type { GameState, Player } from "../types/types";
 
 export function getAdjacentOpponents(player: Player, gameState: GameState): Player[] {
-  return gameState.players.filter(p =>
+  return [...gameState.team1.players, ...gameState.team2.players].filter(p =>
     p.team !== player.team &&
     p.status === 'standing' &&
     Math.abs(p.position.x - player.position.x) <= 1 &&
@@ -11,7 +11,7 @@ export function getAdjacentOpponents(player: Player, gameState: GameState): Play
 }
 
 export function getAdjacentDownedOpponents(player: Player, gameState: GameState): Player[] {
-  return gameState.players.filter(p =>
+  return [...gameState.team1.players, ...gameState.team2.players].filter(p =>
     p.team !== player.team &&
     p.status === 'down' &&
     Math.abs(p.position.x - player.position.x) <= 1 &&
@@ -21,7 +21,7 @@ export function getAdjacentDownedOpponents(player: Player, gameState: GameState)
 }
 
 export function getAdjacentTeammates(player: Player, gameState: GameState): Player[] {
-  return gameState.players.filter(p =>
+  return [...gameState.team1.players, ...gameState.team2.players].filter(p =>
     p.team === player.team &&
     p.id !== player.id &&
     p.status === 'standing' &&

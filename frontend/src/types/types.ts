@@ -15,6 +15,7 @@ export interface BloodBowlTeam {
   record: {wins: number, draws: number, touchdowns: number, casualties: number};
   goalsInthisMatch: number;
   casualtiesInThisMatch: number;
+  turn: number;
 };
 
 export interface Player {
@@ -33,7 +34,7 @@ export interface Player {
   hasMoved: boolean;
   hasActed: boolean;
   movementLeft: number;
-  blitzesLeft: number;
+  rushesLeft: number;
   skills: string[];
   baseSize: 'very small' | 'small' | 'medium' | 'big';
   value: number;
@@ -47,9 +48,7 @@ export interface GameState {
   ballCarrier: string | null;
   currentTeam: string;
   gamePhase: 'coin toss' | 'decide kicker' | 'deploy defence' | 'deploy offense' | 'game' | 'kick off';
-  turn: number;
   half: number;
-  score: { home: number; away: number };
   selectedPlayer: string | null;
   validMoves: { x: number; y: number }[];
   actionPhase: 'select_action' | 'movement' | 'block' | 'blitz_movement' | 'pass' | 'handoff' | 'foul' | 'set location' | null;
