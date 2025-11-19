@@ -94,7 +94,12 @@ const GameHeader: React.FC = (): React.ReactElement => {
             ball: !defence ?
                 (gameState.currentTeam === gameState.team1.name ? deviateBall({x: 6, y: 6}): deviateBall({x: 20, y: 6})) :
                 prev.ball,
-            gamePhase: defence ? 'deploy offense' : 'kick off',
+
+            // when kick off is coded properly, will use this:    
+            //gamePhase: defence ? 'deploy offense' : 'kick off',
+
+            // but now goes directly to match:
+            gamePhase: defence ? 'deploy offense' : 'game',
 
             /* will be like that when proper kick off is coded, where kicker places the ball:
             currentTeam: (gameState.currentTeam === gameState.team1.name) ? gameState.team2.name : gameState.team1.name
@@ -108,9 +113,8 @@ const GameHeader: React.FC = (): React.ReactElement => {
     };
 
     function endTurn() {
-        const nextTeam = gameState.currentTeam === 'home' ? 'away' : 'home';
-        const nextTurn = gameState.currentTeam === 'away' ? gameState.turn + 1 : gameState.turn;
-        const nextHalf = nextTurn > 8 && gameState.half === 1 ? 2 : gameState.half;
+        const nextTeam = gameState.currentTeam === gameState.team1.name ? gameState.team2.name : gameState.team1.name;
+        //const nextHalf = nextTurn > 8 && gameState.half === 1 ? 2 : gameState.half;
 
         // Reset players for new turn
         /*
@@ -121,13 +125,12 @@ const GameHeader: React.FC = (): React.ReactElement => {
             status: p.status === 'down' ? 'standing' : p.status
         }));
 */
-        addLog(`Turn ${nextTurn}, ${nextTeam} team's turn`);
+        //addLog(`Turn ${nextTurn}, ${nextTeam} team's turn`);
 
         setGameState(prev => ({
             ...prev,
             currentTeam: nextTeam,
-            turn: nextTurn > 8 ? 1 : nextTurn,
-            half: nextHalf,
+            half: 1,
             // players: resetPlayers,
             selectedPlayer: null,
             validMoves: [],
@@ -146,15 +149,13 @@ const GameHeader: React.FC = (): React.ReactElement => {
                     <div>
                         <h1>Blood Bowl</h1>
                         <p>
-                            Half {gameState.half} - Turn {gameState.turn}/8
+                            Half {gameState.half}
                         </p>
                     </div>
                 </div>
-
                 <div>
-                    <div>{`${gameState.score.home} Home / ${gameState.score.away} Away`}</div>
+                    <div>{`${gameState.team1.goalsInthisMatch} ${gameState.team1.name} / ${gameState.team2.goalsInthisMatch} ${gameState.team2.name}`}</div>
                 </div>
-
                 {
                     (gameState.gamePhase === 'coin toss') ?
                         <>
@@ -166,8 +167,6 @@ const GameHeader: React.FC = (): React.ReactElement => {
                             </button>
                         </> : <></>
                 }
-
-
                 {
                     (gameState.gamePhase === 'deploy defence') ?
                         <>
@@ -188,8 +187,6 @@ const GameHeader: React.FC = (): React.ReactElement => {
                             </button>
                         </> : <></>
                 }
-
-
                 {
                     (gameState.gamePhase === 'deploy offense') ?
                         <>
@@ -210,7 +207,6 @@ const GameHeader: React.FC = (): React.ReactElement => {
                             </button>
                         </> : <></>
                 }
-
                 <button
                     onClick={endTurn}
                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold"

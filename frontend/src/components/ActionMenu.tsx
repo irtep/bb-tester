@@ -22,7 +22,7 @@ const ActionMenu: React.FC = (): React.ReactElement => {
                 const newY = player.position.y + dy;
 
                 if (newX >= 0 && newX < PITCH_WIDTH && newY >= 0 && newY < PITCH_HEIGHT) {
-                    const occupied = gameState.players.some(p =>
+                    const occupied = [...gameState.team1.players, ...gameState.team2.players].some(p =>
                         p.position.x === newX && p.position.y === newY && p.status === 'standing'
                     );
                     if (!occupied) {
@@ -36,7 +36,7 @@ const ActionMenu: React.FC = (): React.ReactElement => {
     }
 
     function selectAction(action: 'move' | 'block' | 'blitz' | 'pass' | 'handoff' | 'foul') {
-        const player = gameState.players.find(p => p.id === gameState.selectedPlayer);
+        const player = [...gameState.team1.players, ...gameState.team2.players].find(p => p.id === gameState.selectedPlayer);
         if (!player) return;
 
         if (action === 'move') {
@@ -84,8 +84,9 @@ const ActionMenu: React.FC = (): React.ReactElement => {
 
     return (
         <div>
-            {gameState.selectedPlayer && gameState.actionPhase === 'select_action' && (() => {
-                const player = gameState.players.find(p => p.id === gameState.selectedPlayer);
+            jou
+            {gameState.selectedPlayer && gameState.gamePhase === 'game' && gameState.actionPhase === 'select_action' && (() => {
+                const player = [...gameState.team1.players, ...gameState.team2.players].find(p => p.id === gameState.selectedPlayer);
                 if (!player) return null;
 
                 const hasAdjacentOpponents = getAdjacentOpponents(player, gameState).length > 0;
@@ -163,7 +164,3 @@ const ActionMenu: React.FC = (): React.ReactElement => {
 }
 
 export default ActionMenu;
-
-function getValidMoves(player: Player): { x: number; y: number; }[] {
-    throw new Error('Function not implemented.');
-}

@@ -4,21 +4,21 @@ import { CELL_SIZE, END_ZONE_WIDTH, PITCH_HEIGHT, PITCH_WIDTH } from './Blood_Bo
 import GameLog from './GameLog';
 import Bench from './Bench';
 import ShowPlayersOnField from './ShowPlayersOnField';
-import { callDice } from '../functions/gameFunctions';
 
 type TeamKey = 'team1' | 'team2';
 
 const GameBoard: React.FC = (): React.ReactElement => {
     const { gameState, setGameState } = useGame();
 
-    function selectPlayer(playerId: string) {
+    const selectPlayer = (playerId: string) => {
         setGameState(prev => ({
             ...prev,
             selectedPlayer: playerId,
-            validMoves: []
+            validMoves: [],
+            actionPhase: gameState.gamePhase === 'game' ? 'select_action' : null
         }));
     }
-    
+
     const teleportPlayer = (
         teamKey: TeamKey,
         playerId: string,
@@ -277,7 +277,6 @@ const GameBoard: React.FC = (): React.ReactElement => {
                 p => p.position.x === x && p.position.y === y
             );
 
-
         // ----------------------------------
         // deploy defence and offense phase:
         // -----------------------------------
@@ -315,6 +314,26 @@ const GameBoard: React.FC = (): React.ReactElement => {
                 unSelectAndUnAction();
             } else {
 
+            }
+        }
+
+        /** *****************
+         *  GAME phase
+         * ******************/
+
+        if (gameState.gamePhase === 'game') {
+            // if clicks other player that is in turn, select it
+            if (
+                clickedPlayer &&
+                clickedPlayer.id !== gameState.selectedPlayer &&
+                gameState.currentTeam === clickedPlayer.team &&
+                clickedPlayer.hasActed === false
+            ) {
+                console.log('selecting other pl');
+                selectPlayer(clickedPlayer.id);
+                return;
+            } else {
+                console.log(`didn't find other own player: `, clickedPlayer, clickedPlayer?.id !== gameState.selectedPlayer, gameState.currentTeam === clickedPlayer?.team);
             }
         }
 
