@@ -43,7 +43,7 @@ export interface Player {
 }
 
 export interface GameState {
-  ball: { x: number; y: number } | null;
+  ball: { x: number; y: number };
   ballCarrier: string | null;
   currentTeam: string;
   gamePhase: 'coin toss' | 'decide kicker' | 'deploy defence' | 'deploy offense' | 'game' | 'kick off';

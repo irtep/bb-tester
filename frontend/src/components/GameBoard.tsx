@@ -4,13 +4,12 @@ import { CELL_SIZE, END_ZONE_WIDTH, PITCH_HEIGHT, PITCH_WIDTH } from './Blood_Bo
 import GameLog from './GameLog';
 import Bench from './Bench';
 import ShowPlayersOnField from './ShowPlayersOnField';
+import { callDice } from '../functions/gameFunctions';
 
 type TeamKey = 'team1' | 'team2';
 
 const GameBoard: React.FC = (): React.ReactElement => {
-    const { gameState,
-        setGameState
-    } = useGame();
+    const { gameState, setGameState } = useGame();
 
     function selectPlayer(playerId: string) {
         setGameState(prev => ({
@@ -19,6 +18,32 @@ const GameBoard: React.FC = (): React.ReactElement => {
             validMoves: []
         }));
     }
+
+    const deviateBall = () => {
+        let directionDice: number = callDice(8);
+        let distanceDice: number = callDice(6);
+
+        const directionMap: Record<number, { x: number; y: number }> = {
+            1: { x: 0, y: -1 },   // North
+            2: { x: 1, y: -1 },   // Northeast
+            3: { x: 1, y: 0 },    // East
+            4: { x: 1, y: 1 },    // Southeast
+            5: { x: 0, y: 1 },    // South
+            6: { x: -1, y: 1 },   // Southwest
+            7: { x: -1, y: 0 },   // West
+            8: { x: -1, y: -1 }   // Northwest
+        };
+
+        const direction = directionMap[directionDice];
+
+        setGameState(prev => ({
+            ...prev,
+            ball: {
+                x: prev.ball.x + (direction.x * distanceDice),
+                y: prev.ball.y + (direction.y * distanceDice)
+            }
+        }));
+    };
 
     const teleportPlayer = (
         teamKey: TeamKey,
@@ -46,16 +71,37 @@ const GameBoard: React.FC = (): React.ReactElement => {
         }));
     };
 
+    const sendPlayerToBench = (id: string) => {
+        console.log('id to bench: ', id);
+        setGameState(prev => (
+            {
+                ...prev,
+                team1: {
+                    ...prev.team1,
+                    players: prev.team1.players.map(p =>
+                        p.id === id ? { ...p, onField: false, position: { x: -1, y: -1 }, status: 'on bench' } : p)
+                },
+                team2: {
+                    ...prev.team2,
+                    players: prev.team2.players.map(p =>
+                        p.id === id ? { ...p, onField: false, position: { x: -1, y: -1 }, status: 'on bench' } : p)
+                },
+                selectedPlayer: null,
+                actionPhase: null
+            }
+        ));
+    };
+
     /*
     async function movePlayer(targetX: number, targetY: number) {
         if (!gameState.selectedPlayer) return;
-
+    
         const player = gameState.players.find(p => p.id === gameState.selectedPlayer);
         if (!player) return;
-
+    
         const path = findPath(player.position, { x: targetX, y: targetY });
         if (path.length === 0) return;
-
+    
         for (let step of path) {
             // Stop if next cell is occupied
             const occupied = gameState.players.some(p =>
@@ -65,10 +111,10 @@ const GameBoard: React.FC = (): React.ReactElement => {
                 addLog(`Path blocked at (${step.x},${step.y})`);
                 break;
             }
-
+    
             // Step animation
             await new Promise(res => setTimeout(res, 200)); // adjust for faster/slower walk
-
+    
             setGameState(prev => ({
                 ...prev,
                 players: prev.players.map(p =>
@@ -76,7 +122,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
                 )
             }));
         }
-
+    
         // End of movement
         setGameState(prev => ({
             ...prev,
@@ -95,64 +141,64 @@ const GameBoard: React.FC = (): React.ReactElement => {
         function findPath(start: { x: number; y: number }, end: { x: number; y: number }) {
             const path: { x: number; y: number }[] = [];
             let { x, y } = start;
-    
+     
             while (x !== end.x || y !== end.y) {
                 let dx = end.x - x;
                 let dy = end.y - y;
-    
+     
                 // Normalize step to -1, 0, or +1 in each direction
                 if (dx !== 0) dx = dx > 0 ? 1 : -1;
                 if (dy !== 0) dy = dy > 0 ? 1 : -1;
-    
+     
                 x += dx;
                 y += dy;
-    
+     
                 path.push({ x, y });
             }
-    
+     
             return path;
         }
     */
     /*
         function attemptBlock(targetId: string) {
             if (!gameState.selectedPlayer) return;
-    
+     
             const attacker = gameState.players.find(p => p.id === gameState.selectedPlayer);
             const defender = gameState.players.find(p => p.id === targetId);
-    
+     
             if (!attacker || !defender) return;
-    
+     
             // Check adjacency
             const adjacent = Math.abs(attacker.position.x - defender.position.x) <= 1 &&
                 Math.abs(attacker.position.y - defender.position.y) <= 1;
-    
+     
             if (!adjacent) {
                 addLog('Target must be adjacent!');
                 return;
             }
-    
+     
             // Simplified block: compare strength
             const roll = callDice(6);
-    
+     
             const success = roll + attacker.st > defender.st + 3;
-    
+     
             if (success) {
                 const updatedPlayers = gameState.players.map(p =>
                     p.id === targetId ? { ...p, status: 'down' as PlayerStatus } : p
                 );
-    
+     
                 // Ball scatters if carrier knocked down
                 let newBall = gameState.ball;
                 let newBallCarrier = gameState.ballCarrier;
-    
+     
                 if (gameState.ballCarrier === targetId) {
                     newBall = { ...defender.position };
                     newBallCarrier = null;
                     addLog(`Ball carrier knocked down! Ball scatters!`);
                 }
-    
+     
                 addLog(`${attacker.id} blocks ${defender.id} down!`);
-    
+     
                 setGameState(prev => ({
                     ...prev,
                     players: updatedPlayers.map(p =>
@@ -178,23 +224,23 @@ const GameBoard: React.FC = (): React.ReactElement => {
     /*
         function attemptHandoff(targetId: string) {
             if (!gameState.selectedPlayer || gameState.ballCarrier !== gameState.selectedPlayer) return;
-    
+     
             const passer = gameState.players.find(p => p.id === gameState.selectedPlayer);
             const receiver = gameState.players.find(p => p.id === targetId);
-    
+     
             if (!passer || !receiver || receiver.team !== passer.team) return;
-    
+     
             // Check adjacency
             const adjacent = Math.abs(passer.position.x - receiver.position.x) <= 1 &&
                 Math.abs(passer.position.y - receiver.position.y) <= 1;
-    
+     
             if (!adjacent) {
                 addLog('Receiver must be adjacent!');
                 return;
             }
-    
+     
             addLog(`${passer.id} hands off to ${receiver.id}!`);
-    
+     
             setGameState(prev => ({
                 ...prev,
                 ballCarrier: receiver.id,
@@ -207,29 +253,29 @@ const GameBoard: React.FC = (): React.ReactElement => {
     /*
         function attemptFoul(targetId: string) {
             if (!gameState.selectedPlayer) return;
-    
+     
             const fouler = gameState.players.find(p => p.id === gameState.selectedPlayer);
             const target = gameState.players.find(p => p.id === targetId);
-    
+     
             if (!fouler || !target || target.status !== 'down') return;
-    
+     
             // Check adjacency
             const adjacent = Math.abs(fouler.position.x - target.position.x) <= 1 &&
                 Math.abs(fouler.position.y - target.position.y) <= 1;
-    
+     
             if (!adjacent) {
                 addLog('Target must be adjacent!');
                 return;
             }
-    
+     
             const roll = callDice(6);
-    
+     
             if (roll >= 5) {
                 const updatedPlayers = gameState.players.map(p =>
                     p.id === targetId ? { ...p, status: 'ko' as PlayerStatus } : p
                 );
                 addLog(`Foul successful! ${target.id} is knocked out!`);
-    
+     
                 setGameState(prev => ({
                     ...prev,
                     players: updatedPlayers,
@@ -256,10 +302,14 @@ const GameBoard: React.FC = (): React.ReactElement => {
             [...gameState.team1.players, ...gameState.team2.players].find(
                 p => p.position.x === x && p.position.y === y
             );
-        // console.log('clicked player: ', clickedPlayer);
 
+
+        // ----------------------------------
         // deploy defence and offense phase:
+        // -----------------------------------
+
         if (gameState.gamePhase === 'deploy defence' || gameState.gamePhase === 'deploy offense') {
+
             // if clicks other player that is in turn, select it
             if (clickedPlayer && clickedPlayer.id !== gameState.selectedPlayer && gameState.currentTeam === clickedPlayer.team) {
                 console.log('selecting other pl');
@@ -268,6 +318,13 @@ const GameBoard: React.FC = (): React.ReactElement => {
             } else {
                 console.log(`didn't find other own player: `, clickedPlayer, clickedPlayer?.id !== gameState.selectedPlayer, gameState.currentTeam === clickedPlayer?.team);
             }
+
+            // if selected already, then un-deploy
+            if (clickedPlayer && clickedPlayer.id === gameState.selectedPlayer && gameState.currentTeam === clickedPlayer.team) {
+                sendPlayerToBench(clickedPlayer.id);
+                return;
+            }
+
             // check if occupied
             const occupied =
                 [...gameState.team1.players, ...gameState.team2.players].some(

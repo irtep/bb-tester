@@ -31,6 +31,7 @@ const GameHeader: React.FC = (): React.ReactElement => {
         let scrimmagePlayers = 0;
         let wideZone1Players = 0; // y: 0-3
         let wideZone2Players = 0; // y: 11-14
+        let countOfDeployedPlayers = 0;
 
         // Check each player
         for (const player of players) {
@@ -53,6 +54,11 @@ const GameHeader: React.FC = (): React.ReactElement => {
             if (y >= 11 && y <= 14 && player.onField) {
                 wideZone2Players++;
             }
+
+            // total count of deployed players
+            if (player.onField) {
+                countOfDeployedPlayers++;
+            }
         }
 
         // Rule 1: Check minimum 3 players on line of scrimmage
@@ -72,13 +78,20 @@ const GameHeader: React.FC = (): React.ReactElement => {
             return;
         }
 
+        // check if more than 11 players are deployed
+        if (countOfDeployedPlayers > 11) {
+            addLog(`${wideZone2Players} More than 11 players deployed.`);
+            return;
+        }        
+
         // All checks passed
 
         addLog(`Defensive formation deployed. Offensive deploys now.`);
 
         setGameState(prev => ({
             ...prev,
-            gamePhase: defence ? 'deploy offense' : 'kick off'
+            gamePhase: defence ? 'deploy offense' : 'kick off',
+            currentTeam: (gameState.currentTeam === gameState.team1.name) ? gameState.team2.name : gameState.team1.name
         }));
     };
 
